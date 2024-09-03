@@ -295,7 +295,8 @@ export const VideoExtension = {
     const { videoURL, autoplay, controls } = trace.payload;
 
     // Extract video ID from the URL
-    const videoId = new URL(videoURL).pathname.split('/')[1];
+    const url = new URL(videoURL);
+    const videoId = url.searchParams.get('v');
 
     // Construct the YouTube iframe URL with parameters
     const params = new URLSearchParams();
