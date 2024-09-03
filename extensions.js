@@ -517,28 +517,30 @@ export const DateExtension = {
           font-size: 1em;
           color: #555;
           font-weight: bold;
+          margin-bottom: 8px;
+          display: block;
         }
         .container {
           display: flex;
           align-items: center;
+          justify-content: space-between;
+          gap: 10px;
         }
         .input-day {
-          width: 60px;
-          padding: 10px;
+          width: 50px;
+          padding: 5px;
           border: 1px solid #ccc;
           border-radius: 5px;
-          margin-right: 10px;
           text-align: center;
         }
         .dropdown {
           background: #f7f7f7;
           border: 1px solid #ccc;
-          padding: 10px;
+          padding: 5px;
           border-radius: 5px;
           cursor: pointer;
-          margin-right: 10px;
           transition: all 0.3s ease;
-          width: 150px;
+          width: 100px;
           text-align: center;
           position: relative;
         }
@@ -570,9 +572,8 @@ export const DateExtension = {
           color: white;
           padding: 10px;
           border-radius: 5px;
-          width: 150px;
+          width: 80px;
           cursor: pointer;
-          margin-left: 10px;
           transition: all 0.3s ease;
         }
         .submit:hover {
@@ -580,7 +581,7 @@ export const DateExtension = {
         }
       </style>
 
-      <label for="date">Select your date</label><br>
+      <label for="date">Select your date</label>
       <div class="container">
         <input type="number" id="day" class="input-day" placeholder="Day" min="1" max="31" />
         <div id="month" class="dropdown">Month</div>
@@ -665,8 +666,6 @@ export const DateExtension = {
     element.appendChild(formContainer)
   },
 }
-
-
 
 export const ConfettiExtension = {
   name: 'Confetti',
