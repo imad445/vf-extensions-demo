@@ -607,15 +607,30 @@ export const ConfettiExtension = {
       resize: true,
       useWorker: true,
     })
-    
-    myConfetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-      shapes: ['emoji'], // Using emoji shapes
-      emoji: ['❤️'], // Red heart emoji
-      scalar: 1.5, // Adjust size of the emoji
-    })
+
+    // Create red heart emojis as custom shapes
+    for (let i = 0; i < 100; i++) {
+      const emoji = document.createElement('div')
+      emoji.textContent = '❤️'
+      emoji.style.position = 'absolute'
+      emoji.style.fontSize = '24px'
+      emoji.style.animation = 'fall 2s linear infinite'
+      document.body.appendChild(emoji)
+
+      const x = Math.random() * window.innerWidth
+      const y = Math.random() * window.innerHeight
+      emoji.style.left = `${x}px`
+      emoji.style.top = `${y}px`
+    }
+
+    // Custom falling animation
+    const styleSheet = document.styleSheets[0]
+    styleSheet.insertRule(`
+      @keyframes fall {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(100vh); }
+      }
+    `, styleSheet.cssRules.length)
   },
 }
 
@@ -631,85 +646,124 @@ export const FeedbackExtension = {
           <style>
             .vfrc-feedback {
                 display: flex;
+                flex-direction: column;
                 align-items: center;
-                justify-content: space-between;
+                justify-content: center;
+                margin: 20px;
+                padding: 20px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                background-color: #f9f9f9;
             }
 
             .vfrc-feedback--description {
-                font-size: 0.8em;
-                color: grey;
-                pointer-events: none;
+                font-size: 1em;
+                color: #333;
+                margin-bottom: 10px;
             }
 
-            .vfrc-feedback--buttons {
+            .vfrc-feedback--stars {
                 display: flex;
+                justify-content: center;
+                margin-bottom: 15px;
             }
 
-            .vfrc-feedback--button {
-                margin: 0;
-                padding: 0;
-                margin-left: 0px;
+            .vfrc-feedback--star {
+                font-size: 2em;
+                color: #ddd;
+                cursor: pointer;
+                transition: color 0.3s;
+            }
+
+            .vfrc-feedback--star.selected {
+                color: #f5a623;
+            }
+
+            .vfrc-feedback--opinion {
+                width: 100%;
+                margin-bottom: 15px;
+            }
+
+            .vfrc-feedback--opinion input {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                font-size: 1em;
+            }
+
+            .vfrc-feedback--submit {
+                background: linear-gradient(to right, #4CAF50, #66BB6A);
                 border: none;
-                background: none;
-                opacity: 0.2;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 1em;
+                transition: background 0.3s;
             }
 
-            .vfrc-feedback--button:hover {
-              opacity: 0.5; /* opacity on hover */
+            .vfrc-feedback--submit:hover {
+                background: linear-gradient(to right, #43A047, #388E3C);
             }
 
-            .vfrc-feedback--button.selected {
-              opacity: 0.6;
-            }
-
-            .vfrc-feedback--button.disabled {
-                pointer-events: none;
-            }
-
-            .vfrc-feedback--button:first-child svg {
-                fill: none; /* color for thumb up */
-                stroke: none;
-                border: none;
-                margin-left: 6px;
-            }
-
-            .vfrc-feedback--button:last-child svg {
-                margin-left: 4px;
-                fill: none; /* color for thumb down */
-                stroke: none;
-                border: none;
-                transform: rotate(180deg);
+            .vfrc-feedback--submit:disabled {
+                background: #ccc;
+                cursor: not-allowed;
             }
           </style>
           <div class="vfrc-feedback">
-            <div class="vfrc-feedback--description">Was this helpful?</div>
-            <div class="vfrc-feedback--buttons">
-              <button class="vfrc-feedback--button" data-feedback="1">${SVG_Thumb}</button>
-              <button class="vfrc-feedback--button" data-feedback="0">${SVG_Thumb}</button>
+            <div class="vfrc-feedback--description">Please rate your experience:</div>
+            <div class="vfrc-feedback--stars">
+              ${[...Array(5)].map((_, i) => `<span class="vfrc-feedback--star" data-rating="${i + 1}">&#9733;</span>`).join('')}
             </div>
+            <div class="vfrc-feedback--opinion">
+              <input type="text" id="feedbackOpinion" placeholder="Leave your opinion here...">
+            </div>
+            <button class="vfrc-feedback--submit" id="submitFeedback" disabled>Submit Feedback</button>
           </div>
         `
 
-    feedbackContainer
-      .querySelectorAll('.vfrc-feedback--button')
-      .forEach((button) => {
-        button.addEventListener('click', function (event) {
-          const feedback = this.getAttribute('data-feedback')
-          window.voiceflow.chat.interact({
-            type: 'complete',
-            payload: { feedback: feedback },
-          })
+    const stars = feedbackContainer.querySelectorAll('.vfrc-feedback--star')
+    const submitButton = feedbackContainer.querySelector('#submitFeedback')
+    const opinionInput = feedbackContainer.querySelector('#feedbackOpinion')
 
-          feedbackContainer
-            .querySelectorAll('.vfrc-feedback--button')
-            .forEach((btn) => {
-              btn.classList.add('disabled')
-              if (btn === this) {
-                btn.classList.add('selected')
-              }
-            })
+    let selectedRating = 0
+
+    stars.forEach((star) => {
+      star.addEventListener('click', function () {
+        selectedRating = this.getAttribute('data-rating')
+        stars.forEach((s, index) => {
+          s.classList.toggle('selected', index < selectedRating)
         })
+        checkFormValidity()
       })
+    })
+
+    opinionInput.addEventListener('input', checkFormValidity)
+
+    function checkFormValidity() {
+      if (selectedRating > 0 && opinionInput.value.trim() !== '') {
+        submitButton.disabled = false
+      } else {
+        submitButton.disabled = true
+      }
+    }
+
+    submitButton.addEventListener('click', function () {
+      const feedback = {
+        rating: selectedRating,
+        opinion: opinionInput.value.trim(),
+      }
+
+      window.voiceflow.chat.interact({
+        type: 'complete',
+        payload: { feedback },
+      })
+
+      submitButton.disabled = true
+      submitButton.textContent = 'Thank you!'
+    })
 
     element.appendChild(feedbackContainer)
   },
