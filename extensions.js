@@ -518,15 +518,29 @@ export const DateExtension = {
           color: #555;
           font-weight: bold;
         }
+        .container {
+          display: flex;
+          align-items: center;
+        }
+        .input-day {
+          width: 60px;
+          padding: 10px;
+          border: 1px solid #ccc;
+          border-radius: 5px;
+          margin-right: 10px;
+          text-align: center;
+        }
         .dropdown {
           background: #f7f7f7;
           border: 1px solid #ccc;
           padding: 10px;
           border-radius: 5px;
           cursor: pointer;
-          margin: 5px 0;
+          margin-right: 10px;
           transition: all 0.3s ease;
-          width: 100%;
+          width: 150px;
+          text-align: center;
+          position: relative;
         }
         .dropdown:hover {
           background: #e74c3c;
@@ -551,44 +565,41 @@ export const DateExtension = {
           display: block;
         }
         .submit {
-          background: linear-gradient(to right, #e74c3c, #c0392b);
+          background: linear-gradient(to right, #e74c3c, #3498db); /* Red to blue gradient */
           border: none;
           color: white;
           padding: 10px;
           border-radius: 5px;
-          width: 100%;
+          width: 150px;
           cursor: pointer;
-          margin-top: 10px;
+          margin-left: 10px;
           transition: all 0.3s ease;
         }
         .submit:hover {
-          background: linear-gradient(to right, #c0392b, #e74c3c);
+          background: linear-gradient(to right, #3498db, #e74c3c); /* Inverse gradient on hover */
         }
       </style>
 
       <label for="date">Select your date</label><br>
-      <div id="day" class="dropdown">Day</div>
-      <div id="month" class="dropdown">Month</div>
-      <div id="year" class="dropdown">Year</div>
-
-      <div id="day-content" class="dropdown-content">
-        ${Array.from({ length: 31 }, (_, i) => `<div>${i + 1}</div>`).join('')}
+      <div class="container">
+        <input type="number" id="day" class="input-day" placeholder="Day" min="1" max="31" />
+        <div id="month" class="dropdown">Month</div>
+        <div id="year" class="dropdown">Year</div>
+        <input type="submit" id="submit" class="submit" value="Submit" disabled="disabled">
       </div>
+
       <div id="month-content" class="dropdown-content">
         ${months.map(month => `<div>${month}</div>`).join('')}
       </div>
       <div id="year-content" class="dropdown-content">
         ${Array.from({ length: endYear - startYear + 1 }, (_, i) => `<div>${endYear - i}</div>`).join('')}
       </div>
-
-      <input type="submit" id="submit" class="submit" value="Submit" disabled="disabled">
     `
 
-    const dayDropdown = formContainer.querySelector('#day')
+    const dayInput = formContainer.querySelector('#day')
     const monthDropdown = formContainer.querySelector('#month')
     const yearDropdown = formContainer.querySelector('#year')
 
-    const dayContent = formContainer.querySelector('#day-content')
     const monthContent = formContainer.querySelector('#month-content')
     const yearContent = formContainer.querySelector('#year-content')
 
@@ -606,23 +617,17 @@ export const DateExtension = {
       }
     }
 
-    dayDropdown.addEventListener('click', () => {
-      dayContent.classList.toggle('show')
+    dayInput.addEventListener('input', () => {
+      selectedDay = dayInput.value
+      updateSubmitButtonState()
     })
+
     monthDropdown.addEventListener('click', () => {
       monthContent.classList.toggle('show')
     })
+
     yearDropdown.addEventListener('click', () => {
       yearContent.classList.toggle('show')
-    })
-
-    dayContent.addEventListener('click', event => {
-      if (event.target.tagName === 'DIV') {
-        selectedDay = event.target.textContent
-        dayDropdown.textContent = `Day: ${selectedDay}`
-        dayContent.classList.remove('show')
-        updateSubmitButtonState()
-      }
     })
 
     monthContent.addEventListener('click', event => {
@@ -660,6 +665,7 @@ export const DateExtension = {
     element.appendChild(formContainer)
   },
 }
+
 
 
 export const ConfettiExtension = {
