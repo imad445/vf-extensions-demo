@@ -601,36 +601,46 @@ export const ConfettiExtension = {
   match: ({ trace }) =>
     trace.type === 'ext_confetti' || trace.payload.name === 'ext_confetti',
   effect: ({ trace }) => {
-    const canvas = document.querySelector('#confetti-canvas')
-
-    var myConfetti = confetti.create(canvas, {
-      resize: true,
-      useWorker: true,
-    })
+    const canvas = document.querySelector('#confetti-canvas');
 
     // Create red heart emojis as custom shapes
     for (let i = 0; i < 100; i++) {
-      const emoji = document.createElement('div')
-      emoji.textContent = '❤️'
-      emoji.style.position = 'absolute'
-      emoji.style.fontSize = '24px'
-      emoji.style.animation = 'fall 2s linear infinite'
-      document.body.appendChild(emoji)
+      const emoji = document.createElement('div');
+      emoji.textContent = '❤️';
+      emoji.style.position = 'absolute';
+      emoji.style.fontSize = '24px';
+      emoji.style.animation = `fall 3s ease-in-out ${i * 0.1}s forwards`;
+      emoji.style.opacity = '0'; // Start invisible
+      emoji.style.transform = 'scale(0.8)';
+      emoji.style.transition = 'opacity 0.5s, transform 0.5s';
+      document.body.appendChild(emoji);
 
-      const x = Math.random() * window.innerWidth
-      const y = Math.random() * window.innerHeight
-      emoji.style.left = `${x}px`
-      emoji.style.top = `${y}px`
+      const x = Math.random() * window.innerWidth;
+      const y = -50; // Start above the viewport
+      emoji.style.left = `${x}px`;
+      emoji.style.top = `${y}px`;
+
+      // Trigger the smooth appearance and fall
+      setTimeout(() => {
+        emoji.style.opacity = '1';
+        emoji.style.transform = 'scale(1)';
+      }, 100);
     }
 
     // Custom falling animation
-    const styleSheet = document.styleSheets[0]
+    const styleSheet = document.styleSheets[0];
     styleSheet.insertRule(`
       @keyframes fall {
-        0% { transform: translateY(0); }
-        100% { transform: translateY(100vh); }
+        0% { transform: translateY(-50px); opacity: 1; }
+        100% { transform: translateY(100vh); opacity: 0; }
       }
-    `, styleSheet.cssRules.length)
+    `, styleSheet.cssRules.length);
+
+    // Remove emojis after animation ends
+    setTimeout(() => {
+      const emojis = document.querySelectorAll('div[style*="❤️"]');
+      emojis.forEach(emoji => emoji.remove());
+    }, 4000); // 3 seconds for the animation + 1 second buffer
   },
 }
 
