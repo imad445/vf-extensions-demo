@@ -314,7 +314,8 @@ export const VideoExtension = {
     });
     element.appendChild(iframeElement);
   },
-};
+}
+
 
 export const TimerExtension = {
   name: 'Timer',
