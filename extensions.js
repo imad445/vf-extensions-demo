@@ -316,7 +316,6 @@ export const VideoExtension = {
   },
 }
 
-
 export const TimerExtension = {
   name: 'Timer',
   type: 'response',
