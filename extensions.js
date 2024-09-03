@@ -294,8 +294,8 @@ export const VideoExtension = {
     const iframeElement = document.createElement('iframe');
     const { autoplay, controls } = trace.payload;
 
-    // Video ID extracted from the URL
-    const videoId = 'DelhLppPSxY';
+    // Specific video ID from the provided URL
+    const videoId = 'NVBsfpWsvc0';
 
     // Construct the YouTube iframe URL with parameters
     const params = new URLSearchParams();
@@ -303,7 +303,7 @@ export const VideoExtension = {
     if (controls) params.set('controls', '1');
 
     iframeElement.width = '240';
-    iframeElement.height = '135'; // Adjust as needed
+    iframeElement.height = '135'; 
     iframeElement.src = `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
     iframeElement.frameBorder = '0';
     iframeElement.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
