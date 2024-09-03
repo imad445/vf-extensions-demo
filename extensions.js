@@ -502,157 +502,86 @@ export const DateExtension = {
   render: ({ trace, element }) => {
     const formContainer = document.createElement('form')
 
-    const currentYear = new Date().getFullYear()
-    const startYear = 1970
-    const endYear = 2024
+    // Get current date
+    let currentDate = new Date()
+    let minDate = new Date()
+    minDate.setMonth(currentDate.getMonth() - 1)
+    let maxDate = new Date()
+    maxDate.setMonth(currentDate.getMonth() + 2)
 
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June', 
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ]
+    // Convert to ISO string and remove time part
+    let minDateString = minDate.toISOString().slice(0, 10)
+    let maxDateString = maxDate.toISOString().slice(0, 10)
 
     formContainer.innerHTML = `
-      <style>
-        label {
-          font-size: 1em;
-          color: #555;
-          font-weight: bold;
-          margin-bottom: 8px;
-          display: block;
-        }
-        .container {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 10px;
-        }
-        .input-day {
-          width: 50px;
-          padding: 5px;
-          border: 1px solid #ccc;
-          border-radius: 5px;
-          text-align: center;
-        }
-        .dropdown {
-          background: #f7f7f7;
-          border: 1px solid #ccc;
-          padding: 5px;
-          border-radius: 5px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          width: 100px;
-          text-align: center;
-          position: relative;
-        }
-        .dropdown:hover {
-          background: #e74c3c;
-          color: white;
-        }
-        .dropdown-content {
-          display: none;
-          position: absolute;
-          background-color: #f9f9f9;
-          min-width: 100%;
-          box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-          z-index: 1;
-        }
-        .dropdown-content div {
-          padding: 8px 16px;
-          cursor: pointer;
-        }
-        .dropdown-content div:hover {
-          background-color: #f1f1f1;
-        }
-        .show {
-          display: block;
-        }
-        .submit {
-          background: linear-gradient(to right, #e74c3c, #3498db); /* Red to blue gradient */
-          border: none;
-          color: white;
-          padding: 10px;
-          border-radius: 5px;
-          width: 80px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-        .submit:hover {
-          background: linear-gradient(to right, #3498db, #e74c3c); /* Inverse gradient on hover */
-        }
-      </style>
-
-      <label for="date">Select your date</label>
-      <div class="container">
-        <input type="number" id="day" class="input-day" placeholder="Day" min="1" max="31" />
-        <div id="month" class="dropdown">Month</div>
-        <div id="year" class="dropdown">Year</div>
-        <input type="submit" id="submit" class="submit" value="Submit" disabled="disabled">
-      </div>
-
-      <div id="month-content" class="dropdown-content">
-        ${months.map(month => `<div>${month}</div>`).join('')}
-      </div>
-      <div id="year-content" class="dropdown-content">
-        ${Array.from({ length: endYear - startYear + 1 }, (_, i) => `<div>${endYear - i}</div>`).join('')}
-      </div>
-    `
-
-    const dayInput = formContainer.querySelector('#day')
-    const monthDropdown = formContainer.querySelector('#month')
-    const yearDropdown = formContainer.querySelector('#year')
-
-    const monthContent = formContainer.querySelector('#month-content')
-    const yearContent = formContainer.querySelector('#year-content')
-
-    let selectedDay = null
-    let selectedMonth = null
-    let selectedYear = null
+          <style>
+            label {
+              font-size: 0.8em;
+              color: #888;
+            }
+            input[type="date"]::-webkit-calendar-picker-indicator {
+                border: none;
+                background: transparent;
+                border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+                bottom: 0;
+                outline: none;
+                color: transparent;
+                cursor: pointer;
+                height: auto;
+                left: 0;
+                position: absolute;
+                right: 0;
+                top: 0;
+                width: auto;
+                padding:6px;
+                font: normal 8px sans-serif;
+            }
+            .meeting input{
+              background: transparent;
+              border: none;
+              padding: 2px;
+              border-bottom: 0.5px solid rgba(255, 0, 0, 0.5); /* Red color */
+              font: normal 14px sans-serif;
+              outline:none;
+              margin: 5px 0;
+              &:focus{outline:none;}
+            }
+            .invalid {
+              border-color: red;
+            }
+            .submit {
+              background: linear-gradient(to right, #e12e2e, #f12e2e ); /* Red gradient */
+              border: none;
+              color: white;
+              padding: 10px;
+              border-radius: 5px;
+              width: 100%;
+              cursor: pointer;
+              opacity: 0.3;
+            }
+            .submit:enabled {
+              opacity: 1; /* Make the button fully opaque when it's enabled */
+            }
+          </style>
+          <label for="date">Select your date</label><br>
+          <div class="meeting"><input type="date" id="meeting" name="meeting" value="" min="${minDateString}" max="${maxDateString}" /></div><br>
+          <input type="submit" id="submit" class="submit" value="Submit" disabled="disabled">
+          `
 
     const submitButton = formContainer.querySelector('#submit')
+    const dateInput = formContainer.querySelector('#meeting')
 
-    function updateSubmitButtonState() {
-      if (selectedDay && selectedMonth && selectedYear) {
+    dateInput.addEventListener('input', function () {
+      if (this.value) {
         submitButton.disabled = false
       } else {
         submitButton.disabled = true
       }
-    }
-
-    dayInput.addEventListener('input', () => {
-      selectedDay = dayInput.value
-      updateSubmitButtonState()
     })
-
-    monthDropdown.addEventListener('click', () => {
-      monthContent.classList.toggle('show')
-    })
-
-    yearDropdown.addEventListener('click', () => {
-      yearContent.classList.toggle('show')
-    })
-
-    monthContent.addEventListener('click', event => {
-      if (event.target.tagName === 'DIV') {
-        selectedMonth = event.target.textContent
-        monthDropdown.textContent = `Month: ${selectedMonth}`
-        monthContent.classList.remove('show')
-        updateSubmitButtonState()
-      }
-    })
-
-    yearContent.addEventListener('click', event => {
-      if (event.target.tagName === 'DIV') {
-        selectedYear = event.target.textContent
-        yearDropdown.textContent = `Year: ${selectedYear}`
-        yearContent.classList.remove('show')
-        updateSubmitButtonState()
-      }
-    })
-
     formContainer.addEventListener('submit', function (event) {
       event.preventDefault()
 
-      const date = `${selectedYear}-${months.indexOf(selectedMonth) + 1}-${selectedDay}`
+      const date = dateInput.value
       console.log(date)
 
       formContainer.querySelector('.submit').remove()
@@ -662,7 +591,6 @@ export const DateExtension = {
         payload: { date: date },
       })
     })
-
     element.appendChild(formContainer)
   },
 }
