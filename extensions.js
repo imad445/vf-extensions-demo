@@ -609,10 +609,10 @@ export const ConfettiExtension = {
       emoji.textContent = '❤️';
       emoji.style.position = 'absolute';
       emoji.style.fontSize = '24px';
-      emoji.style.animation = `fall 3s ease-in-out ${i * 0.1}s forwards`;
+      emoji.style.animation = `fall 1.5s ease-in-out ${i * 0.05}s forwards`;
       emoji.style.opacity = '0'; // Start invisible
       emoji.style.transform = 'scale(0.8)';
-      emoji.style.transition = 'opacity 0.5s, transform 0.5s';
+      emoji.style.transition = 'opacity 0.3s, transform 0.3s';
       document.body.appendChild(emoji);
 
       const x = Math.random() * window.innerWidth;
@@ -624,7 +624,7 @@ export const ConfettiExtension = {
       setTimeout(() => {
         emoji.style.opacity = '1';
         emoji.style.transform = 'scale(1)';
-      }, 100);
+      }, 50);
     }
 
     // Custom falling animation
@@ -640,7 +640,7 @@ export const ConfettiExtension = {
     setTimeout(() => {
       const emojis = document.querySelectorAll('div[style*="❤️"]');
       emojis.forEach(emoji => emoji.remove());
-    }, 4000); // 3 seconds for the animation + 1 second buffer
+    }, 2000); // 1.5 seconds for the animation + 0.5 second buffer
   },
 }
 
