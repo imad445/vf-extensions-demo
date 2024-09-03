@@ -661,6 +661,7 @@ export const DateExtension = {
   },
 }
 
+
 export const ConfettiExtension = {
   name: 'Confetti',
   type: 'effect',
