@@ -502,16 +502,14 @@ export const DateExtension = {
   render: ({ trace, element }) => {
     const formContainer = document.createElement('form')
 
-    // Get current date and time
-    let currentDate = new Date()
-    let minDate = new Date()
-    minDate.setMonth(currentDate.getMonth() - 1)
-    let maxDate = new Date()
-    maxDate.setMonth(currentDate.getMonth() + 2)
+    const currentYear = new Date().getFullYear()
+    const startYear = 1970
+    const endYear = 2024
 
-    // Convert to ISO string and remove seconds and milliseconds
-    let minDateString = minDate.toISOString().slice(0, 16)
-    let maxDateString = maxDate.toISOString().slice(0, 16)
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June', 
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ]
 
     formContainer.innerHTML = `
       <style>
@@ -520,87 +518,148 @@ export const DateExtension = {
           color: #555;
           font-weight: bold;
         }
-        input[type="datetime-local"] {
-          background: transparent;
-          border: none;
+        .dropdown {
+          background: #f7f7f7;
+          border: 1px solid #ccc;
           padding: 10px;
-          border-bottom: 2px solid #e74c3c; /* Red color scheme */
-          font: normal 14px sans-serif;
-          outline: none;
+          border-radius: 5px;
+          cursor: pointer;
           margin: 5px 0;
           transition: all 0.3s ease;
           width: 100%;
         }
-        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-          border: none;
-          background: transparent;
-          border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+        .dropdown:hover {
+          background: #e74c3c;
+          color: white;
+        }
+        .dropdown-content {
+          display: none;
+          position: absolute;
+          background-color: #f9f9f9;
+          min-width: 100%;
+          box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+          z-index: 1;
+        }
+        .dropdown-content div {
+          padding: 8px 16px;
           cursor: pointer;
-          height: auto;
-          padding: 6px;
-          font: normal 8px sans-serif;
         }
-        input[type="datetime-local"]:focus {
-          border-bottom-color: #c0392b; /* Darker red on focus */
+        .dropdown-content div:hover {
+          background-color: #f1f1f1;
         }
-        .invalid {
-          border-color: red;
+        .show {
+          display: block;
         }
         .submit {
-          background: linear-gradient(to right, #e74c3c, #c0392b); /* Red gradient */
+          background: linear-gradient(to right, #e74c3c, #c0392b);
           border: none;
           color: white;
           padding: 10px;
           border-radius: 5px;
           width: 100%;
           cursor: pointer;
-          opacity: 0.3;
-          transition: all 0.3s ease;
           margin-top: 10px;
+          transition: all 0.3s ease;
         }
-        .submit:enabled {
-          opacity: 1; /* Make the button fully opaque when enabled */
-        }
-        .submit:enabled:hover {
-          background: linear-gradient(to right, #c0392b, #e74c3c); /* Inverse gradient on hover */
+        .submit:hover {
+          background: linear-gradient(to right, #c0392b, #e74c3c);
         }
       </style>
-      <label for="date">Select your date/time</label><br>
-      <div class="meeting">
-        <input type="datetime-local" id="meeting" name="meeting" value="" min="${minDateString}" max="${maxDateString}" />
-      </div><br>
+
+      <label for="date">Select your date</label><br>
+      <div id="day" class="dropdown">Day</div>
+      <div id="month" class="dropdown">Month</div>
+      <div id="year" class="dropdown">Year</div>
+
+      <div id="day-content" class="dropdown-content">
+        ${Array.from({ length: 31 }, (_, i) => `<div>${i + 1}</div>`).join('')}
+      </div>
+      <div id="month-content" class="dropdown-content">
+        ${months.map(month => `<div>${month}</div>`).join('')}
+      </div>
+      <div id="year-content" class="dropdown-content">
+        ${Array.from({ length: endYear - startYear + 1 }, (_, i) => `<div>${endYear - i}</div>`).join('')}
+      </div>
+
       <input type="submit" id="submit" class="submit" value="Submit" disabled="disabled">
     `
 
-    const submitButton = formContainer.querySelector('#submit')
-    const datetimeInput = formContainer.querySelector('#meeting')
+    const dayDropdown = formContainer.querySelector('#day')
+    const monthDropdown = formContainer.querySelector('#month')
+    const yearDropdown = formContainer.querySelector('#year')
 
-    datetimeInput.addEventListener('input', function () {
-      if (this.value) {
+    const dayContent = formContainer.querySelector('#day-content')
+    const monthContent = formContainer.querySelector('#month-content')
+    const yearContent = formContainer.querySelector('#year-content')
+
+    let selectedDay = null
+    let selectedMonth = null
+    let selectedYear = null
+
+    const submitButton = formContainer.querySelector('#submit')
+
+    function updateSubmitButtonState() {
+      if (selectedDay && selectedMonth && selectedYear) {
         submitButton.disabled = false
       } else {
         submitButton.disabled = true
+      }
+    }
+
+    dayDropdown.addEventListener('click', () => {
+      dayContent.classList.toggle('show')
+    })
+    monthDropdown.addEventListener('click', () => {
+      monthContent.classList.toggle('show')
+    })
+    yearDropdown.addEventListener('click', () => {
+      yearContent.classList.toggle('show')
+    })
+
+    dayContent.addEventListener('click', event => {
+      if (event.target.tagName === 'DIV') {
+        selectedDay = event.target.textContent
+        dayDropdown.textContent = `Day: ${selectedDay}`
+        dayContent.classList.remove('show')
+        updateSubmitButtonState()
+      }
+    })
+
+    monthContent.addEventListener('click', event => {
+      if (event.target.tagName === 'DIV') {
+        selectedMonth = event.target.textContent
+        monthDropdown.textContent = `Month: ${selectedMonth}`
+        monthContent.classList.remove('show')
+        updateSubmitButtonState()
+      }
+    })
+
+    yearContent.addEventListener('click', event => {
+      if (event.target.tagName === 'DIV') {
+        selectedYear = event.target.textContent
+        yearDropdown.textContent = `Year: ${selectedYear}`
+        yearContent.classList.remove('show')
+        updateSubmitButtonState()
       }
     })
 
     formContainer.addEventListener('submit', function (event) {
       event.preventDefault()
 
-      const datetime = datetimeInput.value
-      let [date, time] = datetime.split('T')
+      const date = `${selectedYear}-${months.indexOf(selectedMonth) + 1}-${selectedDay}`
+      console.log(date)
 
       formContainer.querySelector('.submit').remove()
 
       window.voiceflow.chat.interact({
         type: 'complete',
-        payload: { date: date, time: time },
+        payload: { date: date },
       })
     })
 
     element.appendChild(formContainer)
   },
 }
-
 
 export const ConfettiExtension = {
   name: 'Confetti',
