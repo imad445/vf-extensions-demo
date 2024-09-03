@@ -100,75 +100,165 @@ export const FormExtension = {
   match: ({ trace }) =>
     trace.type === 'ext_form' || trace.payload.name === 'ext_form',
   render: ({ trace, element }) => {
-    const formContainer = document.createElement('form')
+    const formContainer = document.createElement('div')
+    formContainer.className = 'form-wrapper'
 
     formContainer.innerHTML = `
-          <style>
-            label {
-              font-size: 0.8em;
-              color: #888;
-            }
-            input[type="text"], input[type="email"], input[type="tel"] {
-              width: 100%;
-              border: none;
-              border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
-              background: transparent;
-              margin: 5px 0;
-              outline: none;
-            }
-            .phone {
-              width: 150px;
-            }
-            .invalid {
-              border-color: red;
-            }
-            .submit {
-              background: linear-gradient(to right, #2e6ee1, #2e7ff1 );
-              border: none;
-              color: white;
-              padding: 10px;
-              border-radius: 5px;
-              width: 100%;
-              cursor: pointer;
-            }
-          </style>
+      <style>
+        .form-wrapper {
+          font-family: 'Roboto', Arial, sans-serif;
+          max-width: 300px;
+          margin: 0 auto;
+          padding: 20px;
+          background-color: #f8f8f8;
+          border-radius: 10px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .form-title {
+          color: #cc0000;
+          font-size: 24px;
+          font-weight: bold;
+          text-align: center;
+          margin-bottom: 20px;
+        }
+        .input-group {
+          position: relative;
+          margin-bottom: 20px;
+        }
+        .input-group input {
+          width: 100%;
+          padding: 10px;
+          border: none;
+          border-bottom: 2px solid #ddd;
+          background-color: transparent;
+          font-size: 16px;
+          transition: border-color 0.3s ease;
+        }
+        .input-group input:focus {
+          outline: none;
+          border-bottom-color: #cc0000;
+        }
+        .input-group label {
+          position: absolute;
+          top: 10px;
+          left: 10px;
+          font-size: 16px;
+          color: #888;
+          transition: all 0.3s ease;
+          pointer-events: none;
+        }
+        .input-group input:focus + label,
+        .input-group input:not(:placeholder-shown) + label {
+          top: -20px;
+          left: 0;
+          font-size: 12px;
+          color: #cc0000;
+        }
+        .submit-btn {
+          background-color: #cc0000;
+          color: white;
+          border: none;
+          padding: 12px 20px;
+          border-radius: 25px;
+          font-size: 16px;
+          cursor: pointer;
+          transition: background-color 0.3s ease;
+          width: 100%;
+        }
+        .submit-btn:hover {
+          background-color: #990000;
+        }
+        .error-message {
+          color: #cc0000;
+          font-size: 12px;
+          margin-top: 5px;
+          display: none;
+        }
+      </style>
 
+      <form id="contact-form">
+        <div class="form-title">Contact Us</div>
+
+        <div class="input-group">
+          <input type="text" id="name" name="name" placeholder=" " required>
           <label for="name">Name</label>
-          <input type="text" class="name" name="name" required><br><br>
+          <div class="error-message" id="name-error"></div>
+        </div>
 
+        <div class="input-group">
+          <input type="email" id="email" name="email" placeholder=" " required>
           <label for="email">Email</label>
-          <input type="email" class="email" name="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Invalid email address"><br><br>
+          <div class="error-message" id="email-error"></div>
+        </div>
 
+        <div class="input-group">
+          <input type="tel" id="phone" name="phone" placeholder=" " required>
           <label for="phone">Phone Number</label>
-          <input type="tel" class="phone" name="phone" required pattern="\\d+" title="Invalid phone number, please enter only numbers"><br><br>
+          <div class="error-message" id="phone-error"></div>
+        </div>
 
-          <input type="submit" class="submit" value="Submit">
-        `
+        <button type="submit" class="submit-btn">Submit</button>
+      </form>
+    `
 
-    formContainer.addEventListener('submit', function (event) {
+    const form = formContainer.querySelector('#contact-form')
+    const inputs = form.querySelectorAll('input')
+
+    const showError = (input, message) => {
+      const errorElement = input.parentElement.querySelector('.error-message')
+      errorElement.textContent = message
+      errorElement.style.display = 'block'
+      input.style.borderBottomColor = '#cc0000'
+    }
+
+    const hideError = (input) => {
+      const errorElement = input.parentElement.querySelector('.error-message')
+      errorElement.style.display = 'none'
+      input.style.borderBottomColor = ''
+    }
+
+    inputs.forEach(input => {
+      input.addEventListener('input', () => hideError(input))
+    })
+
+    form.addEventListener('submit', function (event) {
       event.preventDefault()
 
-      const name = formContainer.querySelector('.name')
-      const email = formContainer.querySelector('.email')
-      const phone = formContainer.querySelector('.phone')
+      const name = form.querySelector('#name')
+      const email = form.querySelector('#email')
+      const phone = form.querySelector('#phone')
 
-      if (
-        !name.checkValidity() ||
-        !email.checkValidity() ||
-        !phone.checkValidity()
-      ) {
-        name.classList.add('invalid')
-        email.classList.add('invalid')
-        phone.classList.add('invalid')
-        return
+      let isValid = true
+
+      if (!name.value.trim()) {
+        showError(name, 'Please enter your name')
+        isValid = false
       }
 
-      formContainer.querySelector('.submit').remove()
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+        showError(email, 'Please enter a valid email address')
+        isValid = false
+      }
 
-      window.voiceflow.chat.interact({
-        type: 'complete',
-        payload: { name: name.value, email: email.value, phone: phone.value },
-      })
+      if (!/^\d{10}$/.test(phone.value)) {
+        showError(phone, 'Please enter a valid 10-digit phone number')
+        isValid = false
+      }
+
+      if (isValid) {
+        form.querySelector('.submit-btn').textContent = 'Submitting...'
+        form.querySelector('.submit-btn').disabled = true
+
+        // Simulating form submission
+        setTimeout(() => {
+          window.voiceflow.chat.interact({
+            type: 'complete',
+            payload: { name: name.value, email: email.value, phone: phone.value },
+          })
+
+          form.innerHTML = '<div style="color: #cc0000; text-align: center; font-size: 18px;">Thank you for your submission!</div>'
+        }, 1500)
+      }
     })
 
     element.appendChild(formContainer)
@@ -424,59 +514,63 @@ export const DateExtension = {
     let maxDateString = maxDate.toISOString().slice(0, 16)
 
     formContainer.innerHTML = `
-          <style>
-            label {
-              font-size: 0.8em;
-              color: #888;
-            }
-            input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-                border: none;
-                background: transparent;
-                border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
-                bottom: 0;
-                outline: none;
-                color: transparent;
-                cursor: pointer;
-                height: auto;
-                left: 0;
-                position: absolute;
-                right: 0;
-                top: 0;
-                width: auto;
-                padding:6px;
-                font: normal 8px sans-serif;
-            }
-            .meeting input{
-              background: transparent;
-              border: none;
-              padding: 2px;
-              border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
-              font: normal 14px sans-serif;
-              outline:none;
-              margin: 5px 0;
-              &:focus{outline:none;}
-            }
-            .invalid {
-              border-color: red;
-            }
-            .submit {
-              background: linear-gradient(to right, #2e6ee1, #2e7ff1 );
-              border: none;
-              color: white;
-              padding: 10px;
-              border-radius: 5px;
-              width: 100%;
-              cursor: pointer;
-              opacity: 0.3;
-            }
-            .submit:enabled {
-              opacity: 1; /* Make the button fully opaque when it's enabled */
-            }
-          </style>
-          <label for="date">Select your date/time</label><br>
-          <div class="meeting"><input type="datetime-local" id="meeting" name="meeting" value="" min="${minDateString}" max="${maxDateString}" /></div><br>
-          <input type="submit" id="submit" class="submit" value="Submit" disabled="disabled">
-          `
+      <style>
+        label {
+          font-size: 1em;
+          color: #555;
+          font-weight: bold;
+        }
+        input[type="datetime-local"] {
+          background: transparent;
+          border: none;
+          padding: 10px;
+          border-bottom: 2px solid #e74c3c; /* Red color scheme */
+          font: normal 14px sans-serif;
+          outline: none;
+          margin: 5px 0;
+          transition: all 0.3s ease;
+          width: 100%;
+        }
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+          border: none;
+          background: transparent;
+          border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+          cursor: pointer;
+          height: auto;
+          padding: 6px;
+          font: normal 8px sans-serif;
+        }
+        input[type="datetime-local"]:focus {
+          border-bottom-color: #c0392b; /* Darker red on focus */
+        }
+        .invalid {
+          border-color: red;
+        }
+        .submit {
+          background: linear-gradient(to right, #e74c3c, #c0392b); /* Red gradient */
+          border: none;
+          color: white;
+          padding: 10px;
+          border-radius: 5px;
+          width: 100%;
+          cursor: pointer;
+          opacity: 0.3;
+          transition: all 0.3s ease;
+          margin-top: 10px;
+        }
+        .submit:enabled {
+          opacity: 1; /* Make the button fully opaque when enabled */
+        }
+        .submit:enabled:hover {
+          background: linear-gradient(to right, #c0392b, #e74c3c); /* Inverse gradient on hover */
+        }
+      </style>
+      <label for="date">Select your date/time</label><br>
+      <div class="meeting">
+        <input type="datetime-local" id="meeting" name="meeting" value="" min="${minDateString}" max="${maxDateString}" />
+      </div><br>
+      <input type="submit" id="submit" class="submit" value="Submit" disabled="disabled">
+    `
 
     const submitButton = formContainer.querySelector('#submit')
     const datetimeInput = formContainer.querySelector('#meeting')
@@ -488,11 +582,11 @@ export const DateExtension = {
         submitButton.disabled = true
       }
     })
+
     formContainer.addEventListener('submit', function (event) {
       event.preventDefault()
 
       const datetime = datetimeInput.value
-      console.log(datetime)
       let [date, time] = datetime.split('T')
 
       formContainer.querySelector('.submit').remove()
@@ -502,9 +596,11 @@ export const DateExtension = {
         payload: { date: date, time: time },
       })
     })
+
     element.appendChild(formContainer)
   },
 }
+
 
 export const ConfettiExtension = {
   name: 'Confetti',
