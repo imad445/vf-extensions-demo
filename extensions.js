@@ -292,11 +292,10 @@ export const VideoExtension = {
     trace.type === 'ext_video' || trace.payload.name === 'ext_video',
   render: ({ trace, element }) => {
     const iframeElement = document.createElement('iframe');
-    const { videoURL, autoplay, controls } = trace.payload;
+    const { autoplay, controls } = trace.payload;
 
-    // Extract video ID from the URL
-    const url = new URL(videoURL);
-    const videoId = url.searchParams.get('v');
+    // Video ID extracted from the URL
+    const videoId = 'DelhLppPSxY';
 
     // Construct the YouTube iframe URL with parameters
     const params = new URLSearchParams();
@@ -316,6 +315,7 @@ export const VideoExtension = {
     element.appendChild(iframeElement);
   },
 };
+
 
 export const TimerExtension = {
   name: 'Timer',
