@@ -291,25 +291,30 @@ export const VideoExtension = {
   match: ({ trace }) =>
     trace.type === 'ext_video' || trace.payload.name === 'ext_video',
   render: ({ trace, element }) => {
-    const videoElement = document.createElement('video')
-    const { videoURL, autoplay, controls } = trace.payload
+    const iframeElement = document.createElement('iframe');
+    const { videoURL, autoplay, controls } = trace.payload;
 
-    videoElement.width = 240
-    videoElement.src = videoURL
+    // Extract video ID from the URL
+    const videoId = new URL(videoURL).pathname.split('/')[1];
 
-    if (autoplay) {
-      videoElement.setAttribute('autoplay', '')
-    }
-    if (controls) {
-      videoElement.setAttribute('controls', '')
-    }
+    // Construct the YouTube iframe URL with parameters
+    const params = new URLSearchParams();
+    if (autoplay) params.set('autoplay', '1');
+    if (controls) params.set('controls', '1');
 
-    videoElement.addEventListener('ended', function () {
-      window.voiceflow.chat.interact({ type: 'complete' })
-    })
-    element.appendChild(videoElement)
+    iframeElement.width = '240';
+    iframeElement.height = '135'; // Adjust as needed
+    iframeElement.src = `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
+    iframeElement.frameBorder = '0';
+    iframeElement.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+    iframeElement.allowFullscreen = true;
+
+    iframeElement.addEventListener('ended', function () {
+      window.voiceflow.chat.interact({ type: 'complete' });
+    });
+    element.appendChild(iframeElement);
   },
-}
+};
 
 export const TimerExtension = {
   name: 'Timer',
