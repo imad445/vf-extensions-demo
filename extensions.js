@@ -292,7 +292,10 @@ export const VideoExtension = {
     trace.type === 'ext_video' || trace.payload.name === 'ext_video',
   render: ({ trace, element }) => {
     const videoElement = document.createElement('video')
-    const { videoURL, autoplay, controls } = trace.payload
+    
+    // New URL added
+    const videoURL = 'https://link.voiceflow.fr/ZCODuR';
+    const { autoplay, controls } = trace.payload
 
     videoElement.width = 240
     videoElement.src = videoURL
