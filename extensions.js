@@ -650,223 +650,238 @@ export const ConfettiExtension = {
 }
 
 export const FeedbackExtension = {
-  name: 'Feedback',
+  name: 'FeedbackExtension',
   type: 'response',
   match: ({ trace }) =>
     trace.type === 'ext_feedback' || trace.payload.name === 'ext_feedback',
   render: ({ trace, element }) => {
-    // Create the feedback container
-    const feedbackContainer = document.createElement('div');
-    feedbackContainer.className = 'feedback-wrapper';
+    const $canvas = $('body');
+    const $eyes = $('.eye');
+    const $rateInputs = $('.rate-input');
 
-    // Insert the CSS into a <style> element
-    const style = document.createElement('style');
-    style.textContent = `
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
+    function vendorize(key, value) {
+      const vendors = ['webkit', 'moz', 'ms', 'o', ''];
+      let result = {};
 
-      body {
-        min-height: 100vh;
-        overflow: hidden;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-family: "Montserrat", sans-serif;
-      }
+      vendors.forEach((vendor) => {
+        const vKey = vendor ? '-' + vendor + '-' + key : key;
+        result[vKey] = value;
+      });
 
-      .feedback-wrapper {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: row-reverse;
-        padding: 2em 2em 2em 5em;
-        gap: 10px;
-        border-top-right-radius: 75px;
-        border-bottom-right-radius: 75px;
-        border: none;
-        position: relative;
-        background: #2b2b2b;
-        box-shadow: 0 1px 1px hsl(0deg 0% 0%/0.075),
-                    0 2px 2px hsl(0deg 0% 0%/0.075),
-                    0 4px 4px hsl(0deg 0% 0%/0.075),
-                    0 8px 8px hsl(0deg 0% 0%/0.075),
-                    0 16px 16px hsl(0deg 0% 0%/0.075);
-      }
+      return result;
+    }
 
-      .feedback-wrapper .rating-value {
-        position: absolute;
-        top: -10px;
-        left: -69px;
-        border-radius: 50%;
-        height: 138px;
-        width: 138px;
-        background: #ffbb00;
-        box-shadow: 0 1px 1px hsl(0deg 0% 0%/0.075),
-                    0 2px 2px hsl(0deg 0% 0%/0.075),
-                    0 4px 4px hsl(0deg 0% 0%/0.075),
-                    0 8px 8px hsl(0deg 0% 0%/0.075),
-                    0 16px 16px hsl(0deg 0% 0%/0.075),
-                    inset 0 0 10px #f7db5e,
-                    0 0 10px #f7db5e;
-        transition: all 0.25s ease;
-      }
-
-      .feedback-wrapper .rating-value:before {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        margin: auto;
-        text-align: center;
-        line-height: 138px;
-        font-size: 2.5em;
-        color: #2b2b2b;
-        content: "0";
-        transform-origin: center center;
-      }
-
-      .feedback-wrapper .rating-value:after {
-        content: "";
-        position: absolute;
-        height: 138px;
-        width: 138px;
-        top: -1px;
-        left: -1px;
-        border: 1px solid #ffbb00;
-        border-radius: 50%;
-        transition: all 0.4s ease-in;
-      }
-
-      .feedback-wrapper input {
-        display: none;
-      }
-
-      .feedback-wrapper label {
-        height: 50px;
-        width: 50px;
-        transform-origin: center center;
-      }
-
-      .feedback-wrapper label svg {
-        transition: transform 0.4s ease-in-out;
-        opacity: 0.5;
-      }
-
-      .feedback-wrapper label:hover svg {
-        transform: scale(1.25) rotate(10deg);
-      }
-
-      .feedback-wrapper input:checked ~ label svg {
-        opacity: 1;
-        transform: scale(1.25) rotate(10deg);
-      }
-
-      .feedback-wrapper label:hover {
-        svg,
-        ~ label svg {
-          opacity: 1;
-          transform: scale(1.25) rotate(10deg);
+    function circle_position(x, y, r) {
+      let res = { x: x, y: y };
+      if (x * x + y * y > r * r) {
+        if (x !== 0) {
+          let m = y / x;
+          res.x = Math.sqrt(r * r / (m * m + 1));
+          res.x = x > 0 ? res.x : -res.x;
+          res.y = Math.abs(m * res.x);
+          res.y = y > 0 ? res.y : -res.y;
+        } else {
+          res.y = y > 0 ? r : -r;
         }
       }
+      return res;
+    }
 
-      .feedback-wrapper input:checked {
-        + label:hover svg {
-          opacity: 1;
+    function findCenter(coords, sizeX, sizeY) {
+      return {
+        x: coords.left + sizeX / 2,
+        y: coords.top + sizeY / 2,
+      };
+    }
+
+    function deltaVal(val, targetVal) {
+      const delta = Math.min(100.0, ts - prevTs);
+      const P = 0.001 * delta;
+      return val + P * (targetVal - val);
+    }
+
+    function changeEyesPosition(px, py) {
+      function changePosition() {
+        const $t = $(this);
+        const $pupil = $t.find('.pupil');
+        const t_w = $t.width();
+        const t_h = $t.height();
+        const t_o = $t.offset();
+        const abs_center = findCenter(t_o, t_w, t_h);
+        const pos_x = px - abs_center.x + $(window).scrollLeft();
+        const pos_y = py - abs_center.y + $(window).scrollTop();
+        const cir = circle_position(pos_x, pos_y, t_w / 20);
+        const styles = vendorize('transform', 'translateX(' + cir.x + 'px) translateY(' + cir.y + 'px)');
+
+        $pupil.css(styles);
+      }
+
+      $eyes.each(changePosition);
+    }
+
+    function handleMouseMove(e) {
+      const px = e.pageX,
+        py = e.pageY;
+
+      changeEyesPosition(px, py);
+    }
+
+    $canvas.on('mousemove', handleMouseMove);
+
+    function getFace($element) {
+      return $element.parent('.face-wrapper').find('.face');
+    }
+
+    function handleFaceHover($face) {
+      const $hint = $('.faces-hint');
+      const hintText = $face.attr('data-hint') || $hint.attr('data-default-hint');
+      $hint.text(hintText);
+    }
+
+    function handleFacesHover(e) {
+      const $face = getFace($(e.target));
+
+      handleFaceHover($face);
+    }
+
+    $('.feedback-faces').on('mousemove', handleFacesHover);
+
+    function handleFeedbackTitleHover(e) {
+      const isHover = e.type === 'mouseenter';
+      $(this).parent().toggleClass('title-hovered', isHover);
+    }
+
+    $('.feedback-title').on('mouseenter mouseleave', handleFeedbackTitleHover);
+
+    function handleFeedbackToggle() {
+      const $this = $(this),
+        $parent = $this.parent();
+
+      $parent.toggleClass('at-bottom');
+
+      $parent.find('.face-wrapper').each(function (index) {
+        setTimeout(function (face) {
+          face.toggleClass('slide-out-y-alt', $parent.hasClass('at-bottom'));
+        }, (index - 1) * 40, $(this));
+      });
+    }
+
+    $('.feedback-title').on('click', handleFeedbackToggle);
+
+    function handleRateInputChange() {
+      const rating = parseInt($(this).val());
+
+      getFace($rateInputs).addClass('grayscale');
+      getFace($(this)).removeClass('grayscale');
+      postRating(rating);
+    }
+
+    $rateInputs.on('change', handleRateInputChange);
+
+    function setCounter(stats) {
+      const $counters = $('.face-counter');
+
+      function setTitle($counter, size) {
+        let titleType = '',
+          titlePrefix = '';
+        if (size === 0) {
+          titleType = 'none';
+        } else if (size === 1) {
+          titleType = 'one';
+        } else {
+          titleType = 'many';
+          titlePrefix = `${size} `;
         }
-        ~ label:hover {
-          svg,
-          ~ label svg {
-            opacity: 1;
+
+        $counter.attr({
+          title: titlePrefix + $counter.attr(`data-title-${titleType}`),
+        });
+      }
+
+      $counters.each((index) => {
+        const $counter = $counters.eq(index),
+          size = stats[index] || 0;
+
+        $counter.text(size);
+        setTitle($counter, size);
+        $counter.removeClass('invisible');
+      });
+    }
+
+    function getTotalRating() {
+      let stats = {};
+      firebase
+        .database()
+        .ref('votes')
+        .limitToLast(1000)
+        .once('value', (snapshot) => {
+          snapshot.forEach((snap) => {
+            const val = snap.val();
+            let voteStat = stats[val.vote];
+
+            voteStat = voteStat ? voteStat + 1 : 1;
+            stats[val.vote] = voteStat;
+          });
+          setCounter(stats);
+        });
+    }
+
+    function postRating(rating) {
+      const currentUser = firebase.auth().currentUser;
+
+      if (currentUser) {
+        const uid = currentUser.uid;
+        const data = {
+          vote: rating,
+          time: new Date().getTime(),
+        };
+
+        firebase
+          .database()
+          .ref(`votes/${uid}`)
+          .set(data)
+          .then(getTotalRating);
+      }
+    }
+
+    function loginFB() {
+      console.log('login');
+      firebase
+        .auth()
+        .signInAnonymously()
+        .then((user) => {
+          console.log(firebase.auth().currentUser.uid);
+        })
+        .catch(function (error) {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          if (errorCode === 'auth/operation-not-allowed') {
+            alert('You must enable Anonymous auth in the Firebase Console.');
+          } else {
+            console.error(error);
           }
-        }
+        });
+    }
+
+    function initFB() {
+      const config = {
+        apiKey: 'AIzaSyA7-zbUFMXGItgDwVyfS0IVlqjCytQxQ8k',
+        authDomain: 'greatest-ever.firebaseapp.com',
+        databaseURL: 'https://greatest-ever.firebaseio.com',
+        projectId: 'greatest-ever',
+        storageBucket: 'greatest-ever.appspot.com',
+        messagingSenderId: '784422044422',
+      };
+      firebase.initializeApp(config);
+
+      if (!firebase.auth().currentUser) {
+        loginFB();
       }
+    }
 
-      .feedback-wrapper label:hover ~ input:checked ~ label svg {
-        opacity: 1;
-      }
-
-      .feedback-wrapper #rate1:checked ~ .rating-value:before {
-        content: "1";
-        font-size: 2.75em;
-      }
-
-      .feedback-wrapper label[for="rate1"]:hover ~ .rating-value:before {
-        content: "1" !important;
-        font-size: 2.75em !important;
-      }
-
-      .feedback-wrapper #rate2:checked ~ .rating-value:before {
-        content: "2";
-        font-size: 3em;
-      }
-
-      .feedback-wrapper label[for="rate2"]:hover ~ .rating-value:before {
-        content: "2" !important;
-        font-size: 3em !important;
-      }
-
-      .feedback-wrapper #rate3:checked ~ .rating-value:before {
-        content: "3";
-        font-size: 3.25em;
-      }
-
-      .feedback-wrapper label[for="rate3"]:hover ~ .rating-value:before {
-        content: "3" !important;
-        font-size: 3.25em !important;
-      }
-
-      .feedback-wrapper #rate4:checked ~ .rating-value:before {
-        content: "4";
-        font-size: 3.5em;
-      }
-
-      .feedback-wrapper label[for="rate4"]:hover ~ .rating-value:before {
-        content: "4" !important;
-        font-size: 3.5em !important;
-      }
-
-      .feedback-wrapper #rate5:checked ~ .rating-value:before {
-        content: "5";
-        font-size: 3.75em;
-      }
-
-      @keyframes pulse {
-        0% {
-          height: 138px;
-          width: 138px;
-          top: -1px;
-          left: -1px;
-          opacity: 1;
-        }
-        100% {
-          height: 170px;
-          width: 170px;
-          top: -16px;
-          left: -16px;
-          opacity: 0;
-        }
-      }
-
-      .feedback-wrapper #rate5:checked ~ .rating-value:after {
-        animation: pulse 0.4s ease-out 1;
-      }
-
-      .feedback-wrapper label[for="rate5"]:hover ~ .rating-value:before {
-        content: "5" !important;
-        font-size: 3.75em !important;
-      }
-    `;
-    document.head.appendChild(style);
-
-    // Append the feedback container to the element
-    element.appendChild(feedbackContainer);
-
-    // You can add more logic here to manage the behavior or content of feedbackContainer
-  }
+    initFB();
+    element.appendChild($canvas.get(0));
+  },
 }
 
 export const DinosaurGameExtension = {
