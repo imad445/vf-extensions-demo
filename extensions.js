@@ -1031,7 +1031,7 @@ export const FeedbackExtension = {
 
     element.appendChild(feedbackContainer);
   }
-};
+}
 
 export const DinosaurGameExtension = {
   name: 'DinosaurGame',
