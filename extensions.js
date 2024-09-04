@@ -655,150 +655,60 @@ export const FeedbackExtension = {
   match: ({ trace }) =>
     trace.type === 'ext_feedback' || trace.payload.name === 'ext_feedback',
   render: ({ trace, element }) => {
-    const feedbackContainer = document.createElement('div');
+    const feedbackContainer = document.createElement('div')
+    feedbackContainer.className = 'feedback-form-wrapper'
 
     feedbackContainer.innerHTML = `
-          <style>
-            .vfrc-feedback {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                margin: 20px;
-                padding: 20px;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                background-color: #ffe5e5; /* Light red background */
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            }
+      <style>
+        .feedback-form-wrapper {
+          max-width: 500px;
+          margin: 20px auto;
+          padding: 20px;
+          background-color: #f8f8f8;
+          border-radius: 10px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .feedback-title {
+          font-size: 24px;
+          font-weight: bold;
+          text-align: center;
+          margin-bottom: 20px;
+          color: #333;
+        }
+      </style>
+      <div class="feedback-title">We'd love to hear your feedback!</div>
+    `
 
-            .vfrc-feedback--description {
-                font-size: 1.2em;
-                color: #800000; /* Dark red text */
-                margin-bottom: 10px;
-            }
-
-            .vfrc-feedback--stars {
-                display: flex;
-                justify-content: center;
-                margin-bottom: 15px;
-            }
-
-            .vfrc-feedback--star {
-                font-size: 2.5em;
-                color: #ddd;
-                cursor: pointer;
-                transition: color 0.3s;
-            }
-
-            .vfrc-feedback--star.selected {
-                color: #ff0000; /* Red color for selected stars */
-            }
-
-            .vfrc-feedback--star.half:before {
-                content: '\\2605';
-                position: absolute;
-                overflow: hidden;
-                display: inline-block;
-                width: 50%;
-                color: #ff0000; /* Red for half stars */
-            }
-
-            .vfrc-feedback--opinion {
-                width: 100%;
-                margin-bottom: 15px;
-            }
-
-            .vfrc-feedback--opinion input {
-                width: 100%;
-                padding: 10px;
-                border: 1px solid #800000; /* Dark red border */
-                border-radius: 5px;
-                font-size: 1em;
-                background-color: #fff5f5; /* Very light red background */
-            }
-
-            .vfrc-feedback--submit {
-                background: linear-gradient(to right, #ff6666, #ff4c4c); /* Gradient red background */
-                border: none;
-                color: white;
-                padding: 10px 20px;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 1.1em;
-                transition: background 0.3s;
-            }
-
-            .vfrc-feedback--submit:hover {
-                background: linear-gradient(to right, #e60000, #cc0000); /* Darker red on hover */
-            }
-
-            .vfrc-feedback--submit:disabled {
-                background: #ccc;
-                cursor: not-allowed;
-            }
-          </style>
-          <div class="vfrc-feedback">
-            <div class="vfrc-feedback--description">Please rate your experience:</div>
-            <div class="vfrc-feedback--stars">
-              ${[...Array(5)].map((_, i) => `
-                <span class="vfrc-feedback--star" data-rating="${i + 1}">
-                  &#9733;
-                </span>
-                <span class="vfrc-feedback--star half" data-rating="${i + 0.5}">
-                  &#9733;
-                </span>
-              `).join('')}
-            </div>
-            <div class="vfrc-feedback--opinion">
-              <input type="text" id="feedbackOpinion" placeholder="Leave your opinion here...">
-            </div>
-            <button class="vfrc-feedback--submit" id="submitFeedback" disabled>Submit Feedback</button>
-          </div>
-        `;
-
-    const stars = feedbackContainer.querySelectorAll('.vfrc-feedback--star');
-    const submitButton = feedbackContainer.querySelector('#submitFeedback');
-    const opinionInput = feedbackContainer.querySelector('#feedbackOpinion');
-
-    let selectedRating = 0;
-
-    stars.forEach((star) => {
-      star.addEventListener('click', function () {
-        selectedRating = parseFloat(this.getAttribute('data-rating'));
-        stars.forEach((s, index) => {
-          s.classList.toggle('selected', index < Math.ceil(selectedRating * 2) / 2);
-        });
-        checkFormValidity();
-      });
-    });
-
-    opinionInput.addEventListener('input', checkFormValidity);
-
-    function checkFormValidity() {
-      if (selectedRating > 0 && opinionInput.value.trim() !== '') {
-        submitButton.disabled = false;
-      } else {
-        submitButton.disabled = true;
-      }
+    // Load Elfsight script
+    if (!document.querySelector('script[src="https://static.elfsight.com/platform/platform.js"]')) {
+      const script = document.createElement('script')
+      script.src = 'https://static.elfsight.com/platform/platform.js'
+      script.setAttribute('data-use-service-core', '')
+      script.defer = true
+      document.head.appendChild(script)
     }
 
-    submitButton.addEventListener('click', function () {
-      const feedback = {
-        rating: selectedRating,
-        opinion: opinionInput.value.trim(),
-      };
+    // Create Elfsight widget container
+    const widget = document.createElement('div')
+    widget.className = 'elfsight-app-31a044eb-712b-4983-895a-974d4d0bd77f'
+    widget.setAttribute('data-elfsight-app-lazy', '')
 
-      window.voiceflow.chat.interact({
-        type: 'complete',
-        payload: { feedback },
-      });
+    feedbackContainer.appendChild(widget)
+    element.appendChild(feedbackContainer)
 
-      submitButton.disabled = true;
-      submitButton.textContent = 'Thank you!';
-    });
-
-    element.appendChild(feedbackContainer);
+    // Optional: Add callback for form submission
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'elfFormSubmitted') {
+        console.log('Feedback form submitted!')
+        // You can add additional logic here, such as sending a message back to the chatbot
+        window.voiceflow.chat.interact({
+          type: 'text',
+          payload: {
+            message: 'Thank you for your feedback! We appreciate your input.',
+          },
+        })
+      }
+    })
   },
 }
 
