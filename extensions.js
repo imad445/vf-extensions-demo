@@ -655,381 +655,217 @@ export const FeedbackExtension = {
   match: ({ trace }) =>
     trace.type === 'ext_feedback' || trace.payload.name === 'ext_feedback',
   render: ({ trace, element }) => {
+    // Create the feedback container
     const feedbackContainer = document.createElement('div');
     feedbackContainer.className = 'feedback-wrapper';
 
-    feedbackContainer.innerHTML = `
-      <style>
-        $face-size: 60px;
-        $face-padding: 10px;
-        $pupil-size: 85%;
-        $eye-size: 26%;
-        $color-violet: #7f28ff;
-        $color-gray: #4f4f4f;
-        $background-light: #eff0f5;
-        $background-white: white;
-        $background-yellow: #ffcd00;
-        $color-dark: #784015;
-        $color-light: #ffcd27;
-        $color-shadow: #ca7432;
-        $color-light-gray: #d3d3d3;
-        $color-gray-dark: #4f4f4f;
-        $color-gray-light: #949494;
+    // Insert the CSS into a <style> element
+    const style = document.createElement('style');
+    style.textContent = `
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        @function relative-to-face-size($size) {
-          @return ($face-size * ($size / 100)) + px;
+      body {
+        min-height: 100vh;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: "Montserrat", sans-serif;
+      }
+
+      .feedback-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: row-reverse;
+        padding: 2em 2em 2em 5em;
+        gap: 10px;
+        border-top-right-radius: 75px;
+        border-bottom-right-radius: 75px;
+        border: none;
+        position: relative;
+        background: #2b2b2b;
+        box-shadow: 0 1px 1px hsl(0deg 0% 0%/0.075),
+                    0 2px 2px hsl(0deg 0% 0%/0.075),
+                    0 4px 4px hsl(0deg 0% 0%/0.075),
+                    0 8px 8px hsl(0deg 0% 0%/0.075),
+                    0 16px 16px hsl(0deg 0% 0%/0.075);
+      }
+
+      .feedback-wrapper .rating-value {
+        position: absolute;
+        top: -10px;
+        left: -69px;
+        border-radius: 50%;
+        height: 138px;
+        width: 138px;
+        background: #ffbb00;
+        box-shadow: 0 1px 1px hsl(0deg 0% 0%/0.075),
+                    0 2px 2px hsl(0deg 0% 0%/0.075),
+                    0 4px 4px hsl(0deg 0% 0%/0.075),
+                    0 8px 8px hsl(0deg 0% 0%/0.075),
+                    0 16px 16px hsl(0deg 0% 0%/0.075),
+                    inset 0 0 10px #f7db5e,
+                    0 0 10px #f7db5e;
+        transition: all 0.25s ease;
+      }
+
+      .feedback-wrapper .rating-value:before {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: auto;
+        text-align: center;
+        line-height: 138px;
+        font-size: 2.5em;
+        color: #2b2b2b;
+        content: "0";
+        transform-origin: center center;
+      }
+
+      .feedback-wrapper .rating-value:after {
+        content: "";
+        position: absolute;
+        height: 138px;
+        width: 138px;
+        top: -1px;
+        left: -1px;
+        border: 1px solid #ffbb00;
+        border-radius: 50%;
+        transition: all 0.4s ease-in;
+      }
+
+      .feedback-wrapper input {
+        display: none;
+      }
+
+      .feedback-wrapper label {
+        height: 50px;
+        width: 50px;
+        transform-origin: center center;
+      }
+
+      .feedback-wrapper label svg {
+        transition: transform 0.4s ease-in-out;
+        opacity: 0.5;
+      }
+
+      .feedback-wrapper label:hover svg {
+        transform: scale(1.25) rotate(10deg);
+      }
+
+      .feedback-wrapper input:checked ~ label svg {
+        opacity: 1;
+        transform: scale(1.25) rotate(10deg);
+      }
+
+      .feedback-wrapper label:hover {
+        svg,
+        ~ label svg {
+          opacity: 1;
+          transform: scale(1.25) rotate(10deg);
         }
+      }
 
-        @mixin absolute-centered {
-          position: absolute;
-          top: 0;
-          left: 0;
-          bottom: 0;
-          right: 0;
-          margin: auto;
+      .feedback-wrapper input:checked {
+        + label:hover svg {
+          opacity: 1;
         }
-
-        * {
-          box-sizing: border-box;
-        }
-
-        body {
-          height: 100vh;
-          background: $background-light;
-          font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-          font-weight: 100;
-          overflow: hidden;
-        }
-
-        .hidden {
-          display: none;
-        }
-
-        .row {
-          display: flex;
-          justify-content: center;
-        }
-
-        .text-center {
-          text-align: center;
-        }
-
-        .slide-out-x { transform: translateX(-100%); }
-        .slide-out-x-alt { transform: translateX(100%); }
-        .slide-out-y { transform: translateY(-100%); }
-        .slide-out-y-alt { transform: translateY(100%); }
-
-        .text-violet { color: $color-violet; }
-        .text-gray { color: $color-gray; }
-
-        .feedback-wrapper {
-          @include absolute-centered;
-          background: $background-white;
-          max-width: 480px;
-          height: 200px;
-          border-radius: 10px;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-          transition: 0.55s cubic-bezier(0.1, 1, 0.25, 1.15);
-
-          &.title-hovered:active {
-            transform: translateY(-5%);
-          }
-
-          &.at-bottom {
-            top: auto;
-            transform: translateY(100%);
-            bottom: 68px;
-            transition: 0.2s ease-out;
-
-            &:active {
-              transform: translateY(105%);
-            }
-          }
-
-          .feedback-title {
-            padding: 20px;
-            color: #fff;
-            background: $color-violet;
-            border-radius: 10px 10px 0 0;
-            height: 68px;
-
-            h1 {
-              margin: 0;
-              font-size: 1.4rem;
-            }
-          }
-
-          .feedback-content {
-            max-height: calc(100vh - 68px);
-            overflow-y: auto;
-          }
-
-          .feedback-faces {
-            padding: 20px;
-            height: 130px;
-            overflow: hidden;
-          }
-        }
-
-        .face-wrapper {
-          position: relative;
-          width: $face-size;
-          height: $face-size;
-          padding: $face-padding;
-          box-sizing: content-box;
-          transition: 0.25s ease-out;
-
-          .face-counter {
-            position: absolute;
-            right: 0;
-            background: #dc230f;
-            width: 25%;
-            height: 25%;
-            text-align: center;
-            line-height: 170%;
-            font-size: 70%;
-            border-radius: 50%;
-            font-weight: 800;
-            color: #fff;
-            z-index: 99;
-            box-shadow: inset 0 relative-to-face-size(-2) relative-to-face-size(3) #b92413;
-            transform: rotate(0deg) scale(1);
-            transition: 0.25s ease-out;
-
-            &.invisible {
-              transform: rotate(150deg) scale(0);
-              opacity: 0;
-            }
-          }
-
-          .face {
-            display: block;
-            background: $background-yellow;
-            border-radius: 50%;
-            width: $face-size;
-            height: $face-size;
-            box-shadow: 0 relative-to-face-size(1) relative-to-face-size(2) #cc9117;
-            transition: 0.25s ease-out;
-
-            &:not([disabled]) {
-              cursor: pointer;
-            }
-
-            &:after {
-              content: '';
-              position: absolute;
-              top: 0;
-              left: 0;
-              right: 0;
-              bottom: 0;
-              border-radius: 50%;
-              box-shadow: inset 0px relative-to-face-size(-5) relative-to-face-size(15) $color-light;
-              z-index: 9;
-            }
-
-            .eye {
-              position: absolute;
-              width: $eye-size;
-              height: $eye-size;
-              margin-top: 32%;
-              left: 18%;
-              border-radius: 50%;
-              transition: 0.25s ease-out;
-
-              &:last-of-type {
-                right: 18%;
-                left: auto;
-              }
-
-              .pupil {
-                position: absolute;
-                background: #794014;
-                left: 0;
-                right: 0;
-                top: 0;
-                margin: auto;
-                width: $pupil-size;
-                height: $pupil-size;
-                border-radius: 50%;
-                box-shadow: inset 0 relative-to-face-size(-2) relative-to-face-size(1) 0px #ca7432;
-                transition: width 0.25s ease-out, height 0.25s ease-out;
-              }
-
-              .eyelid {
-                position: absolute;
-                width: 100%;
-                height: 0%;
-                bottom: -5%;
-                border-radius: 50%;
-                background: $background-yellow;
-                transition: 0.25s ease-out;
-              }
-            }
-
-            .mouth-wrapper {
-              position: absolute;
-              top: 60%;
-              width: 100%;
-
-              .mouth {
-                width: 40%;
-                height: relative-to-face-size(24);
-                background: $color-dark;
-                left: 0;
-                right: 0;
-                margin: auto;
-                position: relative;
-                border-radius: 290%;
-                box-shadow: inset 0 relative-to-face-size(-2) relative-to-face-size(1) 0px #ca7432;
-                transition: 0.25s ease-out;
-
-                &:before {
-                  content: '';
-                  position: absolute;
-                  width: 120%;
-                  height: 73%;
-                  background: $background-light;
-                  border-radius: 0 0 140% 140%;
-                  top: 0;
-                  left: -10%;
-                  transition: 0.25s ease-out;
-                }
-              }
-            }
-
-            &.grayscale {
-              transform: scale(0.9);
-              background: $color-light-gray;
-              box-shadow: 0 relative-to-face-size(1) relative-to-face-size(2) #ccc;
-
-              &:after {
-                box-shadow: inset 0px relative-to-face-size(-5) relative-to-face-size(15) #bbbbbb;
-              }
-
-              .pupil {
-                background: $color-gray-dark;
-                box-shadow: inset 0 relative-to-face-size(-2) relative-to-face-size(1) 0px $color-gray-light;
-              }
-
-              .eyelid {
-                background: $color-light-gray;
-              }
-
-              &.face-love .eyelid,
-              &.face-love .eyelid:before,
-              &.face-love .eyelid:after {
-                background: #707070;
-              }
-
-              .mouth {
-                background: $color-gray-dark;
-                box-shadow: inset 0 relative-to-face-size(-2) relative-to-face-size(1) 0px $color-gray-light;
-
-                &:before {
-                  background: $color-light-gray;
-                }
-              }
-            }
-          }
-
-          &:hover {
-            .face {
-              transform: scale(1.1);
-            }
-
-            .eyes-wrapper {
-              animation: shake infinite 0.15s;
-              transform: translate3d(0, 0, 0);
-              backface-visibility: hidden;
-              perspective: 1000px;
-
-              .eyelid {
-                height: 50%;
-              }
-            }
-
-            .mouth-wrapper {
-              .mouth {
-                transform: scaleX(1.2);
-
-                &:before {
-                  transform: translateY(-20%) scaleY(0.75);
-                }
-              }
-            }
-          }
-
-          &:active {
-            .face {
-              transform: scale(1.05);
-            }
-
-            .eyes-wrapper {
-              .eye .eyelid {
-                height: 75%;
-              }
-            }
+        ~ label:hover {
+          svg,
+          ~ label svg {
+            opacity: 1;
           }
         }
+      }
 
-        @keyframes shake {
-          0% { transform: translateX(-1px); }
-          25% { transform: translateX(2px); }
-          50% { transform: translateX(-1px); }
-          75% { transform: translateX(2px); }
-          100% { transform: translateX(0); }
+      .feedback-wrapper label:hover ~ input:checked ~ label svg {
+        opacity: 1;
+      }
+
+      .feedback-wrapper #rate1:checked ~ .rating-value:before {
+        content: "1";
+        font-size: 2.75em;
+      }
+
+      .feedback-wrapper label[for="rate1"]:hover ~ .rating-value:before {
+        content: "1" !important;
+        font-size: 2.75em !important;
+      }
+
+      .feedback-wrapper #rate2:checked ~ .rating-value:before {
+        content: "2";
+        font-size: 3em;
+      }
+
+      .feedback-wrapper label[for="rate2"]:hover ~ .rating-value:before {
+        content: "2" !important;
+        font-size: 3em !important;
+      }
+
+      .feedback-wrapper #rate3:checked ~ .rating-value:before {
+        content: "3";
+        font-size: 3.25em;
+      }
+
+      .feedback-wrapper label[for="rate3"]:hover ~ .rating-value:before {
+        content: "3" !important;
+        font-size: 3.25em !important;
+      }
+
+      .feedback-wrapper #rate4:checked ~ .rating-value:before {
+        content: "4";
+        font-size: 3.5em;
+      }
+
+      .feedback-wrapper label[for="rate4"]:hover ~ .rating-value:before {
+        content: "4" !important;
+        font-size: 3.5em !important;
+      }
+
+      .feedback-wrapper #rate5:checked ~ .rating-value:before {
+        content: "5";
+        font-size: 3.75em;
+      }
+
+      @keyframes pulse {
+        0% {
+          height: 138px;
+          width: 138px;
+          top: -1px;
+          left: -1px;
+          opacity: 1;
         }
-
-        .rating-stars {
-          display: flex;
-          justify-content: center;
-          margin: 20px;
-          .star {
-            font-size: 2rem;
-            color: $color-dark;
-            cursor: pointer;
-            transition: color 0.3s ease;
-
-            &.selected {
-              color: $color-yellow;
-            }
-          }
+        100% {
+          height: 170px;
+          width: 170px;
+          top: -16px;
+          left: -16px;
+          opacity: 0;
         }
+      }
 
-        .feedback-text {
-          margin: 20px;
-          textarea {
-            width: 100%;
-            height: 80px;
-            border: 1px solid $color-gray-light;
-            border-radius: 5px;
-            padding: 10px;
-            font-size: 1rem;
-            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
-          }
-        }
-      </style>
+      .feedback-wrapper #rate5:checked ~ .rating-value:after {
+        animation: pulse 0.4s ease-out 1;
+      }
 
-      <div class="feedback-title">
-        <h1>Leave Your Feedback</h1>
-      </div>
-      <div class="feedback-content">
-        <div class="feedback-faces">
-          <!-- Faces will be dynamically inserted here -->
-        </div>
-        <div class="rating-stars">
-          <!-- Stars for rating -->
-        </div>
-        <div class="feedback-text">
-          <textarea placeholder="Your comments here..."></textarea>
-        </div>
-      </div>
+      .feedback-wrapper label[for="rate5"]:hover ~ .rating-value:before {
+        content: "5" !important;
+        font-size: 3.75em !important;
+      }
     `;
+    document.head.appendChild(style);
 
-    // Insert faces dynamically or handle interactions
-    // Insert rating stars dynamically or handle interactions
-
+    // Append the feedback container to the element
     element.appendChild(feedbackContainer);
+
+    // You can add more logic here to manage the behavior or content of feedbackContainer
   }
 }
 
