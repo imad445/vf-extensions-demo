@@ -655,7 +655,7 @@ export const FeedbackExtension = {
   match: ({ trace }) =>
     trace.type === 'ext_feedback' || trace.payload.name === 'ext_feedback',
   render: ({ trace, element }) => {
-    const feedbackContainer = document.createElement('div')
+    const feedbackContainer = document.createElement('div');
 
     feedbackContainer.innerHTML = `
           <style>
@@ -667,7 +667,7 @@ export const FeedbackExtension = {
 
             .vfrc-feedback--description {
                 font-size: 0.8em;
-                color: grey;
+                color: black; /* Changed to black */
                 pointer-events: none;
             }
 
@@ -696,18 +696,14 @@ export const FeedbackExtension = {
                 pointer-events: none;
             }
 
-            .vfrc-feedback--button:first-child svg {
-                fill: none; /* color for thumb up */
-                stroke: none;
+            .vfrc-feedback--button:first-child svg,
+            .vfrc-feedback--button:last-child svg {
+                fill: red; /* Changed to red */
+                stroke: red; /* Changed to red */
                 border: none;
-                margin-left: 6px;
             }
 
             .vfrc-feedback--button:last-child svg {
-                margin-left: 4px;
-                fill: none; /* color for thumb down */
-                stroke: none;
-                border: none;
                 transform: rotate(180deg);
             }
           </style>
@@ -718,30 +714,30 @@ export const FeedbackExtension = {
               <button class="vfrc-feedback--button" data-feedback="0">${SVG_Thumb}</button>
             </div>
           </div>
-        `
+        `;
 
     feedbackContainer
       .querySelectorAll('.vfrc-feedback--button')
       .forEach((button) => {
-        button.addEventListener('click', function (event) {
-          const feedback = this.getAttribute('data-feedback')
+        button.addEventListener('click', function () {
+          const feedback = this.getAttribute('data-feedback');
           window.voiceflow.chat.interact({
             type: 'complete',
             payload: { feedback: feedback },
-          })
+          });
 
           feedbackContainer
             .querySelectorAll('.vfrc-feedback--button')
             .forEach((btn) => {
-              btn.classList.add('disabled')
+              btn.classList.add('disabled');
               if (btn === this) {
-                btn.classList.add('selected')
+                btn.classList.add('selected');
               }
-            })
-        })
-      })
+            });
+        });
+      });
 
-    element.appendChild(feedbackContainer)
+    element.appendChild(feedbackContainer);
   },
 }
 
