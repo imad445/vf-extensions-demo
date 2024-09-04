@@ -801,3 +801,166 @@ export const FeedbackExtension = {
     element.appendChild(feedbackContainer);
   },
 }
+
+export const DinosaurGameExtension = {
+  name: 'DinosaurGame',
+  type: 'response',
+  match: ({ trace }) =>
+    trace.type === 'ext_dinosaur_game' || trace.payload.name === 'ext_dinosaur_game',
+  render: ({ trace, element }) => {
+    const gameContainer = document.createElement('div')
+    gameContainer.className = 'dinosaur-game-wrapper'
+
+    gameContainer.innerHTML = `
+      <style>
+        .dinosaur-game-wrapper {
+          font-family: 'Fredoka One', cursive;
+          max-width: 500px;
+          margin: 0 auto;
+          padding: 20px;
+          background-color: #16d9e3;
+          border-radius: 10px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .game-title {
+          color: #ffffff;
+          font-size: 24px;
+          font-weight: bold;
+          text-align: center;
+          margin-bottom: 20px;
+        }
+        .board {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          grid-gap: 10px;
+        }
+        .card {
+          width: 100%;
+          height: 100px;
+          background-color: wheat;
+          border-radius: 5px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-size: 40px;
+          color: #93794c;
+          cursor: pointer;
+          transition: transform 0.3s ease;
+        }
+        .card.flipped {
+          transform: rotateY(180deg);
+          background-color: #fff8e7;
+          background-size: contain;
+          background-repeat: no-repeat;
+          background-position: center;
+        }
+        .card.matched {
+          pointer-events: none;
+        }
+        .game-over {
+          text-align: center;
+          margin-top: 20px;
+          font-size: 20px;
+          color: #ffffff;
+        }
+        .reset-btn {
+          background-color: #fbc300;
+          color: #ffffff;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 25px;
+          font-size: 16px;
+          cursor: pointer;
+          transition: background-color 0.3s ease;
+          margin-top: 10px;
+        }
+        .reset-btn:hover {
+          background-color: #f2a003;
+        }
+      </style>
+
+      <div class="game-title">Dinosaur Memory Game</div>
+      <div class="board"></div>
+      <div class="game-over"></div>
+    `
+
+    const board = gameContainer.querySelector('.board')
+    const gameOver = gameContainer.querySelector('.game-over')
+    
+    const dinosaurs = ['🥚', '🦖', '🦕', '🦴', '🦴', '🦕', '🦖', '🥚']
+    let flippedCards = []
+    let matchedPairs = 0
+
+    function createCard(dinosaur, index) {
+      const card = document.createElement('div')
+      card.className = 'card'
+      card.textContent = '?'
+      card.dataset.index = index
+      card.addEventListener('click', flipCard)
+      return card
+    }
+
+    function flipCard() {
+      if (flippedCards.length < 2 && !this.classList.contains('flipped')) {
+        this.classList.add('flipped')
+        this.textContent = dinosaurs[this.dataset.index]
+        flippedCards.push(this)
+
+        if (flippedCards.length === 2) {
+          setTimeout(checkMatch, 500)
+        }
+      }
+    }
+
+    function checkMatch() {
+      const [card1, card2] = flippedCards
+      if (card1.textContent === card2.textContent) {
+        card1.classList.add('matched')
+        card2.classList.add('matched')
+        matchedPairs++
+
+        if (matchedPairs === dinosaurs.length / 2) {
+          gameOver.textContent = 'Congratulations! You won!'
+          const resetBtn = document.createElement('button')
+          resetBtn.textContent = 'Play Again'
+          resetBtn.className = 'reset-btn'
+          resetBtn.addEventListener('click', resetGame)
+          gameOver.appendChild(resetBtn)
+        }
+      } else {
+        card1.classList.remove('flipped')
+        card2.classList.remove('flipped')
+        card1.textContent = '?'
+        card2.textContent = '?'
+      }
+      flippedCards = []
+    }
+
+    function resetGame() {
+      board.innerHTML = ''
+      gameOver.innerHTML = ''
+      matchedPairs = 0
+      flippedCards = []
+      shuffleArray(dinosaurs)
+      initializeBoard()
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]]
+      }
+    }
+
+    function initializeBoard() {
+      shuffleArray(dinosaurs)
+      dinosaurs.forEach((dinosaur, index) => {
+        const card = createCard(dinosaur, index)
+        board.appendChild(card)
+      })
+    }
+
+    initializeBoard()
+    element.appendChild(gameContainer)
+  },
+}
