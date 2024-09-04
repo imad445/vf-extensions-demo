@@ -291,28 +291,23 @@ export const VideoExtension = {
   match: ({ trace }) =>
     trace.type === 'ext_video' || trace.payload.name === 'ext_video',
   render: ({ trace, element }) => {
-    const iframeElement = document.createElement('iframe');
-    const { autoplay, controls } = trace.payload;
+    const videoElement = document.createElement('video')
+    const { videoURL, autoplay, controls } = trace.payload
 
-    // Specific video ID from the provided URL
-    const videoId = 'NVBsfpWsvc0';
+    videoElement.width = 240
+    videoElement.src = videoURL
 
-    // Construct the YouTube iframe URL with parameters
-    const params = new URLSearchParams();
-    if (autoplay) params.set('autoplay', '1');
-    if (controls) params.set('controls', '1');
+    if (autoplay) {
+      videoElement.setAttribute('autoplay', '')
+    }
+    if (controls) {
+      videoElement.setAttribute('controls', '')
+    }
 
-    iframeElement.width = '240';
-    iframeElement.height = '135'; 
-    iframeElement.src = `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
-    iframeElement.frameBorder = '0';
-    iframeElement.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-    iframeElement.allowFullscreen = true;
-
-    iframeElement.addEventListener('ended', function () {
-      window.voiceflow.chat.interact({ type: 'complete' });
-    });
-    element.appendChild(iframeElement);
+    videoElement.addEventListener('ended', function () {
+      window.voiceflow.chat.interact({ type: 'complete' })
+    })
+    element.appendChild(videoElement)
   },
 }
 
