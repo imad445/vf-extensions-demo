@@ -656,59 +656,99 @@ export const FeedbackExtension = {
     trace.type === 'ext_feedback' || trace.payload.name === 'ext_feedback',
   render: ({ trace, element }) => {
     const feedbackContainer = document.createElement('div')
-    feedbackContainer.className = 'feedback-form-wrapper'
+    feedbackContainer.className = 'feedback-wrapper'
 
     feedbackContainer.innerHTML = `
       <style>
-        .feedback-form-wrapper {
-          max-width: 500px;
+        .feedback-wrapper {
+          font-family: Arial, sans-serif;
+          max-width: 400px;
           margin: 20px auto;
           padding: 20px;
-          background-color: #f8f8f8;
-          border-radius: 10px;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          background-color: #ffffff;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         .feedback-title {
-          font-size: 24px;
+          font-size: 20px;
           font-weight: bold;
-          text-align: center;
-          margin-bottom: 20px;
-          color: #333;
+          margin-bottom: 15px;
+        }
+        .rating-question {
+          margin-bottom: 10px;
+        }
+        .emoji-rating {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 15px;
+        }
+        .emoji-rating span {
+          font-size: 24px;
+          cursor: pointer;
+          transition: transform 0.2s;
+        }
+        .emoji-rating span:hover {
+          transform: scale(1.2);
+        }
+        input, textarea {
+          width: 100%;
+          padding: 8px;
+          margin-bottom: 10px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+        }
+        textarea {
+          height: 100px;
+          resize: vertical;
+        }
+        .submit-btn {
+          background-color: #8a2be2;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 16px;
+        }
+        .submit-btn:hover {
+          background-color: #7a1dd1;
         }
       </style>
-      <div class="feedback-title">We'd love to hear your feedback!</div>
+      <div class="feedback-title">Share your feedback with us</div>
+      <div class="rating-question">How would you rate our service?</div>
+      <div class="emoji-rating">
+        <span data-rating="1">😠</span>
+        <span data-rating="2">🙁</span>
+        <span data-rating="3">😐</span>
+        <span data-rating="4">🙂</span>
+        <span data-rating="5">😄</span>
+      </div>
+      <input type="email" placeholder="Email address" required>
+      <textarea placeholder="Please, leave your feedback below" required></textarea>
+      <button class="submit-btn">Submit</button>
     `
 
-    // Load Elfsight script
-    if (!document.querySelector('script[src="https://static.elfsight.com/platform/platform.js"]')) {
-      const script = document.createElement('script')
-      script.src = 'https://static.elfsight.com/platform/platform.js'
-      script.setAttribute('data-use-service-core', '')
-      script.defer = true
-      document.head.appendChild(script)
-    }
+    const emojiRating = feedbackContainer.querySelector('.emoji-rating')
+    const emojis = emojiRating.querySelectorAll('span')
+    const colors = ['#ff0000', '#ffa500', '#ffff00', '#90ee90', '#008000']
 
-    // Create Elfsight widget container
-    const widget = document.createElement('div')
-    widget.className = 'elfsight-app-31a044eb-712b-4983-895a-974d4d0bd77f'
-    widget.setAttribute('data-elfsight-app-lazy', '')
-
-    feedbackContainer.appendChild(widget)
-    element.appendChild(feedbackContainer)
-
-    // Optional: Add callback for form submission
-    window.addEventListener('message', (event) => {
-      if (event.data.type === 'elfFormSubmitted') {
-        console.log('Feedback form submitted!')
-        // You can add additional logic here, such as sending a message back to the chatbot
-        window.voiceflow.chat.interact({
-          type: 'text',
-          payload: {
-            message: 'Thank you for your feedback! We appreciate your input.',
-          },
-        })
-      }
+    emojis.forEach((emoji, index) => {
+      emoji.addEventListener('click', () => {
+        emojis.forEach(e => e.style.color = '')
+        for (let i = 0; i <= index; i++) {
+          emojis[i].style.color = colors[i]
+        }
+      })
     })
+
+    const submitBtn = feedbackContainer.querySelector('.submit-btn')
+    submitBtn.addEventListener('click', () => {
+      // Handle form submission logic here
+      console.log('Feedback submitted')
+      // You can add logic to send the feedback data to your server or chatbot
+    })
+
+    element.appendChild(feedbackContainer)
   },
 }
 
