@@ -650,237 +650,98 @@ export const ConfettiExtension = {
 }
 
 export const FeedbackExtension = {
-  name: 'FeedbackExtension',
+  name: 'Feedback',
   type: 'response',
   match: ({ trace }) =>
     trace.type === 'ext_feedback' || trace.payload.name === 'ext_feedback',
   render: ({ trace, element }) => {
-    const $canvas = $('body');
-    const $eyes = $('.eye');
-    const $rateInputs = $('.rate-input');
+    const feedbackContainer = document.createElement('div')
 
-    function vendorize(key, value) {
-      const vendors = ['webkit', 'moz', 'ms', 'o', ''];
-      let result = {};
+    feedbackContainer.innerHTML = `
+          <style>
+            .vfrc-feedback {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
 
-      vendors.forEach((vendor) => {
-        const vKey = vendor ? '-' + vendor + '-' + key : key;
-        result[vKey] = value;
-      });
+            .vfrc-feedback--description {
+                font-size: 0.8em;
+                color: grey;
+                pointer-events: none;
+            }
 
-      return result;
-    }
+            .vfrc-feedback--buttons {
+                display: flex;
+            }
 
-    function circle_position(x, y, r) {
-      let res = { x: x, y: y };
-      if (x * x + y * y > r * r) {
-        if (x !== 0) {
-          let m = y / x;
-          res.x = Math.sqrt(r * r / (m * m + 1));
-          res.x = x > 0 ? res.x : -res.x;
-          res.y = Math.abs(m * res.x);
-          res.y = y > 0 ? res.y : -res.y;
-        } else {
-          res.y = y > 0 ? r : -r;
-        }
-      }
-      return res;
-    }
+            .vfrc-feedback--button {
+                margin: 0;
+                padding: 0;
+                margin-left: 0px;
+                border: none;
+                background: none;
+                opacity: 0.2;
+            }
 
-    function findCenter(coords, sizeX, sizeY) {
-      return {
-        x: coords.left + sizeX / 2,
-        y: coords.top + sizeY / 2,
-      };
-    }
+            .vfrc-feedback--button:hover {
+              opacity: 0.5; /* opacity on hover */
+            }
 
-    function deltaVal(val, targetVal) {
-      const delta = Math.min(100.0, ts - prevTs);
-      const P = 0.001 * delta;
-      return val + P * (targetVal - val);
-    }
+            .vfrc-feedback--button.selected {
+              opacity: 0.6;
+            }
 
-    function changeEyesPosition(px, py) {
-      function changePosition() {
-        const $t = $(this);
-        const $pupil = $t.find('.pupil');
-        const t_w = $t.width();
-        const t_h = $t.height();
-        const t_o = $t.offset();
-        const abs_center = findCenter(t_o, t_w, t_h);
-        const pos_x = px - abs_center.x + $(window).scrollLeft();
-        const pos_y = py - abs_center.y + $(window).scrollTop();
-        const cir = circle_position(pos_x, pos_y, t_w / 20);
-        const styles = vendorize('transform', 'translateX(' + cir.x + 'px) translateY(' + cir.y + 'px)');
+            .vfrc-feedback--button.disabled {
+                pointer-events: none;
+            }
 
-        $pupil.css(styles);
-      }
+            .vfrc-feedback--button:first-child svg {
+                fill: none; /* color for thumb up */
+                stroke: none;
+                border: none;
+                margin-left: 6px;
+            }
 
-      $eyes.each(changePosition);
-    }
+            .vfrc-feedback--button:last-child svg {
+                margin-left: 4px;
+                fill: none; /* color for thumb down */
+                stroke: none;
+                border: none;
+                transform: rotate(180deg);
+            }
+          </style>
+          <div class="vfrc-feedback">
+            <div class="vfrc-feedback--description">Was this helpful?</div>
+            <div class="vfrc-feedback--buttons">
+              <button class="vfrc-feedback--button" data-feedback="1">${SVG_Thumb}</button>
+              <button class="vfrc-feedback--button" data-feedback="0">${SVG_Thumb}</button>
+            </div>
+          </div>
+        `
 
-    function handleMouseMove(e) {
-      const px = e.pageX,
-        py = e.pageY;
+    feedbackContainer
+      .querySelectorAll('.vfrc-feedback--button')
+      .forEach((button) => {
+        button.addEventListener('click', function (event) {
+          const feedback = this.getAttribute('data-feedback')
+          window.voiceflow.chat.interact({
+            type: 'complete',
+            payload: { feedback: feedback },
+          })
 
-      changeEyesPosition(px, py);
-    }
-
-    $canvas.on('mousemove', handleMouseMove);
-
-    function getFace($element) {
-      return $element.parent('.face-wrapper').find('.face');
-    }
-
-    function handleFaceHover($face) {
-      const $hint = $('.faces-hint');
-      const hintText = $face.attr('data-hint') || $hint.attr('data-default-hint');
-      $hint.text(hintText);
-    }
-
-    function handleFacesHover(e) {
-      const $face = getFace($(e.target));
-
-      handleFaceHover($face);
-    }
-
-    $('.feedback-faces').on('mousemove', handleFacesHover);
-
-    function handleFeedbackTitleHover(e) {
-      const isHover = e.type === 'mouseenter';
-      $(this).parent().toggleClass('title-hovered', isHover);
-    }
-
-    $('.feedback-title').on('mouseenter mouseleave', handleFeedbackTitleHover);
-
-    function handleFeedbackToggle() {
-      const $this = $(this),
-        $parent = $this.parent();
-
-      $parent.toggleClass('at-bottom');
-
-      $parent.find('.face-wrapper').each(function (index) {
-        setTimeout(function (face) {
-          face.toggleClass('slide-out-y-alt', $parent.hasClass('at-bottom'));
-        }, (index - 1) * 40, $(this));
-      });
-    }
-
-    $('.feedback-title').on('click', handleFeedbackToggle);
-
-    function handleRateInputChange() {
-      const rating = parseInt($(this).val());
-
-      getFace($rateInputs).addClass('grayscale');
-      getFace($(this)).removeClass('grayscale');
-      postRating(rating);
-    }
-
-    $rateInputs.on('change', handleRateInputChange);
-
-    function setCounter(stats) {
-      const $counters = $('.face-counter');
-
-      function setTitle($counter, size) {
-        let titleType = '',
-          titlePrefix = '';
-        if (size === 0) {
-          titleType = 'none';
-        } else if (size === 1) {
-          titleType = 'one';
-        } else {
-          titleType = 'many';
-          titlePrefix = `${size} `;
-        }
-
-        $counter.attr({
-          title: titlePrefix + $counter.attr(`data-title-${titleType}`),
-        });
-      }
-
-      $counters.each((index) => {
-        const $counter = $counters.eq(index),
-          size = stats[index] || 0;
-
-        $counter.text(size);
-        setTitle($counter, size);
-        $counter.removeClass('invisible');
-      });
-    }
-
-    function getTotalRating() {
-      let stats = {};
-      firebase
-        .database()
-        .ref('votes')
-        .limitToLast(1000)
-        .once('value', (snapshot) => {
-          snapshot.forEach((snap) => {
-            const val = snap.val();
-            let voteStat = stats[val.vote];
-
-            voteStat = voteStat ? voteStat + 1 : 1;
-            stats[val.vote] = voteStat;
-          });
-          setCounter(stats);
-        });
-    }
-
-    function postRating(rating) {
-      const currentUser = firebase.auth().currentUser;
-
-      if (currentUser) {
-        const uid = currentUser.uid;
-        const data = {
-          vote: rating,
-          time: new Date().getTime(),
-        };
-
-        firebase
-          .database()
-          .ref(`votes/${uid}`)
-          .set(data)
-          .then(getTotalRating);
-      }
-    }
-
-    function loginFB() {
-      console.log('login');
-      firebase
-        .auth()
-        .signInAnonymously()
-        .then((user) => {
-          console.log(firebase.auth().currentUser.uid);
+          feedbackContainer
+            .querySelectorAll('.vfrc-feedback--button')
+            .forEach((btn) => {
+              btn.classList.add('disabled')
+              if (btn === this) {
+                btn.classList.add('selected')
+              }
+            })
         })
-        .catch(function (error) {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          if (errorCode === 'auth/operation-not-allowed') {
-            alert('You must enable Anonymous auth in the Firebase Console.');
-          } else {
-            console.error(error);
-          }
-        });
-    }
+      })
 
-    function initFB() {
-      const config = {
-        apiKey: 'AIzaSyA7-zbUFMXGItgDwVyfS0IVlqjCytQxQ8k',
-        authDomain: 'greatest-ever.firebaseapp.com',
-        databaseURL: 'https://greatest-ever.firebaseio.com',
-        projectId: 'greatest-ever',
-        storageBucket: 'greatest-ever.appspot.com',
-        messagingSenderId: '784422044422',
-      };
-      firebase.initializeApp(config);
-
-      if (!firebase.auth().currentUser) {
-        loginFB();
-      }
-    }
-
-    initFB();
-    element.appendChild($canvas.get(0));
+    element.appendChild(feedbackContainer)
   },
 }
 
