@@ -649,108 +649,67 @@ export const ConfettiExtension = {
   },
 }
 
-export const FeedbackExtension = {
-  name: 'Feedback',
-  type: 'response',
-  match: ({ trace }) =>
-    trace.type === 'ext_feedback' || trace.payload.name === 'ext_feedback',
-  render: ({ trace, element }) => {
-    const feedbackContainer = document.createElement('div')
-    feedbackContainer.className = 'feedback-wrapper'
+export const FeedbackExtension = () => {
+  const [selectedFace, setSelectedFace] = useState(null);
+  const [hoveredFace, setHoveredFace] = useState(null);
 
-    feedbackContainer.innerHTML = `
-      <style>
-        .feedback-wrapper {
-          font-family: Arial, sans-serif;
-          max-width: 400px;
-          margin: 20px auto;
-          padding: 20px;
-          background-color: #ffffff;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .feedback-title {
-          font-size: 20px;
-          font-weight: bold;
-          margin-bottom: 15px;
-        }
-        .rating-question {
-          margin-bottom: 10px;
-        }
-        .emoji-rating {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 15px;
-        }
-        .emoji-rating span {
-          font-size: 24px;
-          cursor: pointer;
-          transition: transform 0.2s;
-        }
-        .emoji-rating span:hover {
-          transform: scale(1.2);
-        }
-        input, textarea {
-          width: 100%;
-          padding: 8px;
-          margin-bottom: 10px;
-          border: 1px solid #ccc;
-          border-radius: 4px;
-        }
-        textarea {
-          height: 100px;
-          resize: vertical;
-        }
-        .submit-btn {
-          background-color: #8a2be2;
-          color: white;
-          border: none;
-          padding: 10px 20px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 16px;
-        }
-        .submit-btn:hover {
-          background-color: #7a1dd1;
-        }
-      </style>
-      <div class="feedback-title">Share your feedback with us</div>
-      <div class="rating-question">How would you rate our service?</div>
-      <div class="emoji-rating">
-        <span data-rating="1">😠</span>
-        <span data-rating="2">🙁</span>
-        <span data-rating="3">😐</span>
-        <span data-rating="4">🙂</span>
-        <span data-rating="5">😄</span>
+  const handleFaceClick = (face) => {
+    setSelectedFace(face);
+    // Dispatch ext_feedback event with selected face data
+    // Replace with your specific event dispatching mechanism
+    // Example using a context:
+    FeedbackContext.dispatch({
+      type: 'ext_feedback',
+      payload: {
+        face: face,
+        // Add other relevant data if needed
+      },
+    });
+  };
+
+  const handleFaceHover = (face) => {
+    setHoveredFace(face);
+  };
+
+  return (
+    <div className="feedback-wrapper">
+      <div className="feedback-title">
+        <h1>Share your feedback</h1>
       </div>
-      <input type="email" placeholder="Email address" required>
-      <textarea placeholder="Please, leave your feedback below" required></textarea>
-      <button class="submit-btn">Submit</button>
-    `
-
-    const emojiRating = feedbackContainer.querySelector('.emoji-rating')
-    const emojis = emojiRating.querySelectorAll('span')
-    const colors = ['#ff0000', '#ffa500', '#ffff00', '#90ee90', '#008000']
-
-    emojis.forEach((emoji, index) => {
-      emoji.addEventListener('click', () => {
-        emojis.forEach(e => e.style.color = '')
-        for (let i = 0; i <= index; i++) {
-          emojis[i].style.color = colors[i]
-        }
-      })
-    })
-
-    const submitBtn = feedbackContainer.querySelector('.submit-btn')
-    submitBtn.addEventListener('click', () => {
-      // Handle form submission logic here
-      console.log('Feedback submitted')
-      // You can add logic to send the feedback data to your server or chatbot
-    })
-
-    element.appendChild(feedbackContainer)
-  },
-}
+      <div className="feedback-content">
+        <div className="feedback-faces">
+          {faces.map((face) => (
+            <div
+              key={face.id}
+              className={`face-wrapper ${face.type}`}
+              onMouseOver={() => handleFaceHover(face)}
+              onMouseOut={() => handleFaceHover(null)}
+              onClick={() => handleFaceClick(face)}
+            >
+              <div className="face-counter">{face.id}</div>
+              <div className="face">
+                {/* ... face elements */}
+                <div className="eyes-wrapper">
+                  <div className="eye">
+                    <div className="pupil"></div>
+                    <div className="eyelid"></div>
+                  </div>
+                  <div className="eye">
+                    <div className="pupil"></div>
+                    <div className="eyelid"></div>
+                  </div>
+                </div>
+                <div className="mouth-wrapper">
+                  <div className="mouth"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const DinosaurGameExtension = {
   name: 'DinosaurGame',
