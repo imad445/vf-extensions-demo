@@ -50,7 +50,7 @@
           s = d.getElementsByTagName(t)[0];
         v.onload = function () {
           window.voiceflow.chat.load({
-            verify: { projectID: '66afd6ac2bfb4f7068ccd7d7' },
+            verify: { projectID: '66afd6ac2bfb4f7068ccd7d7' },  // Ensure this ID is correct
             url: 'https://general-runtime.voiceflow.com',
             versionID: 'production',
             user: {
@@ -58,6 +58,7 @@
             },
             render: {
               mode: 'overlay',
+              target: '#voiceflow-chat-frame'  // Ensure the target is correct
             },
             autostart: true,
             allowDangerousHTML: true,
@@ -79,14 +80,17 @@
               ],
             },
           });
-        };
-        window.voiceflow.chat.proactive.push({ 
-  type: 'text', 
-  payload: { 
-    message: 'Need help?' 
-  } 
-});
 
+          // Trigger proactive message after chat is loaded
+          window.voiceflow.chat.proactive.push({ 
+            type: 'text', 
+            payload: { 
+              message: 'Need help?' 
+            } 
+          });
+
+          window.voiceflow.chat.open();  // Open chat manually
+        };
         v.src = 'https://cdn.voiceflow.com/widget/bundle.mjs';
         v.type = 'text/javascript';
         s.parentNode.insertBefore(v, s);
