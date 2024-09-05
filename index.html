@@ -80,6 +80,13 @@
             },
           });
         };
+        window.voiceflow.chat.proactive.push({ 
+  type: 'text', 
+  payload: { 
+    message: 'Need help?' 
+  } 
+});
+
         v.src = 'https://cdn.voiceflow.com/widget/bundle.mjs';
         v.type = 'text/javascript';
         s.parentNode.insertBefore(v, s);
